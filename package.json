@@ -1,0 +1,15 @@
+{
+  "name": "pkh-maker3",
+  "version": "1.0.0",
+  "private": true,
+  "description": "박경호 연뮤캐 변신 무한 서바이벌 미니게임 (Cloudflare Workers + D1)",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "db:init:local": "wrangler d1 execute pkh-maker3-db --local --file=./schema.sql",
+    "db:init:remote": "wrangler d1 execute pkh-maker3-db --remote --file=./schema.sql",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

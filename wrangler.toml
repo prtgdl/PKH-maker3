@@ -1,0 +1,19 @@
+name = "pkh-maker3"
+main = "src/worker.js"
+compatibility_date = "2025-03-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Cloudflare 배포 전 아래 명령어로 D1 데이터베이스를 생성한 뒤,
+# 출력되는 database_id 값을 아래 database_id 항목에 붙여넣어 주세요:
+#   npx wrangler d1 create pkh-maker3-db
+# (로컬 테스트 시에는 수정 없이 바로 npm run dev 로 동작합니다!)
+[[d1_databases]]
+binding = "DB"
+database_name = "pkh-maker3-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[vars]
+APP_NAME = "PKH-maker3"

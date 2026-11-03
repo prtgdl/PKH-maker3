@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#e9e1d4" />
+  <title>PKH MAKER</title>
+  <link rel="icon" type="image/png" href="assets/char_basic.png" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="config.js"></script>
+  <script defer src="game.js"></script>
+</head>
+<body>
+  <main class="app-wrap">
+    <section class="game-box" aria-label="게임 화면">
+      <!-- 상단 통합 헤더 바 (화면이 작아져도 절대 겹치지 않는 반응형 상단바) -->
+      <header class="top-stage-bar" id="top-stage-bar">
+        <!-- 좌측: 시작 화면에서는 닉네임 버튼 / 플레이 중에는 목숨 3개 표시 -->
+        <div class="top-left-slot">
+          <button type="button" id="btn-open-auth" class="user-chip-btn">
+            <span id="account-pill-text">닉네임 등록</span>
+          </button>
+          <div id="hud-lives" class="hud-lives-row" hidden aria-label="남은 기회">
+            <img src="assets/life_guinea.png" alt="" class="hud-life-icon" draggable="false" />
+            <img src="assets/life_guinea.png" alt="" class="hud-life-icon" draggable="false" />
+            <img src="assets/life_guinea.png" alt="" class="hud-life-icon" draggable="false" />
+          </div>
+        </div>
+
+        <!-- 중앙: 플레이 중 시간(00:00) & 점수 -->
+        <div id="hud-stats" class="hud-stats-pill" hidden>
+          <span id="hud-time" class="hud-time">00:00</span>
+          <span class="hud-divider"></span>
+          <strong id="hud-score" class="hud-score">0</strong>
+        </div>
+
+        <!-- 우측: 소리(♪) & 일시정지(❚❚) -->
+        <div class="hud-buttons">
+          <button id="btn-sound" class="circle-icon-btn" type="button" aria-label="소리 켜기/끄기" aria-pressed="true" title="소리 켜기/끄기">
+            <span id="sound-label">♪</span>
+          </button>
+          <button id="btn-pause" class="circle-icon-btn" type="button" aria-label="일시정지" hidden title="일시정지">
+            ❚❚
+          </button>
+        </div>
+      </header>
+
+      <canvas id="stage-canvas" width="450" height="800"></canvas>
+
+      <!-- 1. 시작 화면 -->
+      <div id="screen-start" class="title-screen">
+        <div class="title-center-hero">
+          <!-- 추후 로고 이미지 전달 시 교체될 점선 영역 -->
+          <div id="logo-slot" class="logo-placeholder">
+            <span id="logo-placeholder-label">로고 영역</span>
+            <img id="brand-logo-img" src="" alt="게임 로고" class="brand-logo-img" hidden draggable="false" />
+          </div>
+
+          <img id="start-hero-img" src="assets/char_basic.png" alt="박경호 캐릭터" class="title-hero-img" draggable="false" />
+
+          <p class="main-desc" id="start-subtitle">
+            떨어지는 소품을 모아<br />오늘의 배역을 완성해 보세요.
+          </p>
+        </div>
+
+        <div class="title-bottom-dock">
+          <p class="simple-rules">좌우로 이동 &middot; 기회는 세 번</p>
+          <button type="button" id="btn-start-game" class="btn-solid">시작하기</button>
+          <div class="btn-pair">
+            <button type="button" id="btn-open-ranking" class="btn-line">랭킹</button>
+            <button type="button" id="btn-open-guide" class="btn-line">게임 방법</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 일시정지 화면 -->
+      <div id="screen-pause" class="overlay-layer" hidden>
+        <div class="panel-card pause-card">
+          <h2 class="sub-title">일시정지</h2>
+          <p class="pause-desc">게임을 계속 진행할까요?</p>
+          <button type="button" id="btn-resume" class="btn-solid">계속하기</button>
+          <div class="btn-pair">
+            <button type="button" id="btn-restart-pause" class="btn-line">다시 시작</button>
+            <button type="button" id="btn-quit-home" class="btn-line">처음으로</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 결과 화면 -->
+      <div id="screen-result" class="overlay-layer" hidden>
+        <div class="panel-card result-card" id="result-card-box">
+          <div class="result-top-tags" id="result-new-record" hidden>
+            <span class="record-label">최고 기록 경신</span>
+          </div>
+
+          <div class="result-char-frame" id="result-portrait-bg">
+            <img id="result-char-img" src="assets/char_simon.png" alt="변신 결과 캐릭터" class="result-char-img" draggable="false" />
+          </div>
+
+          <h2 class="result-name" id="result-title">사이먼</h2>
+          <p class="result-copy" id="result-comment"></p>
+
+          <div class="score-summary-row">
+            <div class="score-cell">
+              <span>점수</span>
+              <strong id="result-score">0</strong>
+            </div>
+            <div class="score-sep"></div>
+            <div class="score-cell">
+              <span>버틴 시간</span>
+              <strong id="result-time">00:00</strong>
+            </div>
+          </div>
+
+          <div class="tally-grid" id="result-collected-list" aria-label="배역별 모은 소품 수"></div>
+
+          <div class="rank-notice-box" id="result-rank-banner">
+            <span id="result-rank-msg">기록 확인 중...</span>
+            <button type="button" id="btn-result-register" class="save-score-btn" hidden>
+              닉네임 입력하고 이 점수 기록하기
+            </button>
+          </div>
+
+          <button type="button" id="btn-retry" class="btn-solid">다시 하기</button>
+          <div class="btn-pair">
+            <button type="button" id="btn-result-ranking" class="btn-line">랭킹 보기</button>
+            <button type="button" id="btn-result-home" class="btn-line">처음으로</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 닉네임 / PIN 모달 -->
+      <div id="modal-auth" class="modal-dim" hidden role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <div class="modal-box">
+          <button type="button" class="close-x" data-close-modal="modal-auth" aria-label="닫기">&times;</button>
+          <h3 id="auth-modal-title" class="modal-heading">닉네임 등록 / 로그인</h3>
+          <p class="modal-subcopy">
+            처음 입력하는 닉네임은 바로 등록되며,<br />
+            이미 있는 닉네임은 PIN 번호가 같으면 이전 기록과 이어집니다.
+          </p>
+
+          <form id="form-auth" class="auth-form" autocomplete="off">
+            <label class="input-label">
+              <span>닉네임 (2~10자)</span>
+              <input type="text" id="input-nickname" maxlength="10" placeholder="닉네임 입력" required />
+            </label>
+            <label class="input-label">
+              <span>PIN 번호 (숫자 4~6자리)</span>
+              <input type="password" id="input-pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="숫자 4~6자리" required />
+            </label>
+            <p id="auth-error-msg" class="error-text" hidden></p>
+            <button type="submit" id="btn-auth-submit" class="btn-solid">
+              <span id="auth-submit-label">확인</span>
+            </button>
+          </form>
+
+          <div id="auth-logged-box" class="logged-bar" hidden>
+            <span id="auth-logged-summary"></span>
+            <button type="button" id="btn-logout" class="logout-btn">다른 닉네임 쓰기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. 랭킹 모달 -->
+      <div id="modal-ranking" class="modal-dim" hidden role="dialog" aria-modal="true" aria-labelledby="ranking-modal-title">
+        <div class="modal-box ranking-modal-box">
+          <button type="button" class="close-x" data-close-modal="modal-ranking" aria-label="닫기">&times;</button>
+          <div class="ranking-header-row">
+            <h3 id="ranking-modal-title" class="modal-heading">랭킹</h3>
+            <button type="button" id="btn-refresh-ranking" class="refresh-btn">새로고침</button>
+          </div>
+          <p class="ranking-count" id="ranking-meta-text"></p>
+
+          <div class="ranking-scroll" id="ranking-list-wrap">
+            <ol class="ranking-ol" id="ranking-list"></ol>
+          </div>
+
+          <div class="my-rank-footer" id="my-rank-bar">
+            <span id="my-rank-bar-text">닉네임을 등록하면 내 순위가 표시됩니다.</span>
+            <button type="button" id="btn-rank-login" class="footer-reg-btn" hidden>등록</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. 게임 방법 모달 -->
+      <div id="modal-guide" class="modal-dim" hidden role="dialog" aria-modal="true" aria-labelledby="guide-modal-title">
+        <div class="modal-box guide-modal-box">
+          <button type="button" class="close-x" data-close-modal="modal-guide" aria-label="닫기">&times;</button>
+          <h3 id="guide-modal-title" class="modal-heading">게임 방법</h3>
+          <p class="modal-subcopy">
+            좌우로 움직여 배역별 소품을 모아 보세요.<br />
+            게임이 끝날 때 가장 많이 모은 소품의 캐릭터로 변합니다.
+          </p>
+
+          <div class="guide-grid" id="guide-roles-grid"></div>
+
+          <div class="danger-guide-row">
+            <img id="guide-bomb-img" src="assets/bomb_silver.png" alt="실버" class="danger-thumb" draggable="false" />
+            <div class="danger-text">
+              <strong id="guide-bomb-name">실버</strong>
+              <p id="guide-bomb-desc">닿으면 기회가 한 번 줄어듭니다. 세 번 닿으면 게임이 끝나요.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
