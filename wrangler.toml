@@ -13,7 +13,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "pkh-maker3-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "94760b9d-180b-43c3-a291-d09f6b1554eb"
 
 [vars]
 APP_NAME = "PKH-maker3"
