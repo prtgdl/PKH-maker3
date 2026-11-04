@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#cfc0af" />
   <title>PKH MAKER</title>
-  <link rel="icon" type="image/png" href="assets/char_basic.png" />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="preload" as="image" href="assets/bg_stage.webp" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/logo.webp" fetchpriority="high" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" /></noscript>
   <script defer src="config.js"></script>
   <script defer src="game.js"></script>
 </head>
@@ -23,9 +26,9 @@
             <span id="account-pill-text">닉네임 등록</span>
           </button>
           <div id="hud-lives" class="hud-lives-row" hidden aria-label="남은 기회">
-            <img src="assets/life_guinea.png" alt="" class="hud-life-icon" draggable="false" />
-            <img src="assets/life_guinea.png" alt="" class="hud-life-icon" draggable="false" />
-            <img src="assets/life_guinea.png" alt="" class="hud-life-icon" draggable="false" />
+            <img src="assets/life_guinea.webp" alt="" class="hud-life-icon" loading="lazy" decoding="async" draggable="false" />
+            <img src="assets/life_guinea.webp" alt="" class="hud-life-icon" loading="lazy" decoding="async" draggable="false" />
+            <img src="assets/life_guinea.webp" alt="" class="hud-life-icon" loading="lazy" decoding="async" draggable="false" />
           </div>
         </div>
 
@@ -52,13 +55,12 @@
       <!-- 1. 시작 화면 -->
       <div id="screen-start" class="title-screen">
         <div class="title-center-hero">
-          <!-- 추후 로고 이미지 전달 시 교체될 점선 영역 -->
-          <div id="logo-slot" class="logo-placeholder">
-            <span id="logo-placeholder-label">로고 영역</span>
-            <img id="brand-logo-img" src="" alt="게임 로고" class="brand-logo-img" hidden draggable="false" />
+          <div id="logo-slot" class="logo-placeholder has-logo">
+            <span id="logo-placeholder-label" hidden>로고 영역</span>
+            <img id="brand-logo-img" src="assets/logo.webp" alt="게임 로고" class="brand-logo-img" fetchpriority="high" decoding="async" draggable="false" />
           </div>
 
-          <img id="start-hero-img" src="assets/char_basic.png" alt="박경호 캐릭터" class="title-hero-img" draggable="false" />
+          <img id="start-hero-img" src="assets/char_basic.webp" alt="박경호 캐릭터" class="title-hero-img" fetchpriority="high" decoding="async" draggable="false" />
 
           <p class="main-desc" id="start-subtitle">
             떨어지는 소품을 모아<br />오늘의 배역을 완성해 보세요.
@@ -66,9 +68,9 @@
         </div>
 
         <div class="title-bottom-dock">
-          <button type="button" id="btn-start-game" class="btn-solid" aria-label="시작하기">
-            <span id="start-btn-label">시작하기</span>
-            <img id="start-btn-img" src="" alt="시작하기" class="start-btn-img" hidden draggable="false" />
+          <button type="button" id="btn-start-game" class="btn-solid has-play-img" aria-label="시작하기">
+            <span id="start-btn-label" hidden>시작하기</span>
+            <img id="start-btn-img" src="assets/btn_play.webp" alt="시작하기" class="start-btn-img" fetchpriority="high" decoding="async" draggable="false" />
           </button>
           <div class="btn-pair">
             <button type="button" id="btn-open-ranking" class="btn-line">랭킹</button>
@@ -199,7 +201,7 @@
           <div class="guide-grid" id="guide-roles-grid"></div>
 
           <div class="danger-guide-row">
-            <img id="guide-bomb-img" src="assets/bomb_silver.png" alt="실버" class="danger-thumb" draggable="false" />
+            <img id="guide-bomb-img" src="assets/bomb_silver.png" alt="실버" class="danger-thumb" loading="lazy" decoding="async" draggable="false" />
             <div class="danger-text">
               <strong id="guide-bomb-name">실버</strong>
               <p id="guide-bomb-desc">닿으면 기회가 한 번 줄어듭니다. 세 번 닿으면 게임이 끝나요.</p>

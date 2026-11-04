@@ -78,7 +78,7 @@ input {
   position: relative;
   height: min(820px, calc(100dvh - 28px));
   aspect-ratio: 9 / 16;
-  background: #e8dccb;
+  background: #e8dccb url("assets/bg_stage.webp") no-repeat 0 100% / 100% 93%;
   border: 2.5px solid var(--ink);
   border-radius: 6px;
   overflow: hidden;

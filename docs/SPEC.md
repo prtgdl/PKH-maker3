@@ -94,7 +94,7 @@ PKH-maker3/
 
 ## 6. 추후 고객 회신 후 반영할 체크리스트 (Pending Tasks)
 
-- [x] **로고 · 플레이버튼 · 무대 배경 이미지 및 앤티크 UI 적용**: `public/assets/logo.png`, `public/assets/btn_play.png`, `public/assets/bg_stage.png` 반영 및 전 화면 앤티크 명판 테마 통일 완료
+- [x] **로고 · 플레이버튼 · 무대 배경 이미지 및 앤티크 UI 적용**: `public/assets/logo.webp`, `public/assets/btn_play.webp`, `public/assets/bg_stage.webp` 경량화 반영 및 전 화면 앤티크 명판 테마 통일 완료
 - [x] **Cloudflare 프로덕션 배포 (`pkh-maker3.webplay.workers.dev`)**: D1 `pkh-maker3-db` 연동 및 GitHub `main` 브랜치 push 시 자동 배포 구성 완료
 - [ ] **게임 정식 타이틀 & 문구 확정 반영**: 고객 회신 시 `public/config.js` → `brand.title`, `brand.subtitle` 등 반영
 - [ ] **`실버(칼 모양)` 이미지 교체**: 현재 임시 `장미.png`로 들어가 있는 `public/assets/bomb_silver.png` 파일을 실제 칼 이미지로 교체

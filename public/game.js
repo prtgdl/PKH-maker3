@@ -21,26 +21,27 @@
     });
   }
 
-  function preloadAllAssets() {
-    const tasks = [
-      loadImage('player_basic', CFG.player.image),
+  async function preloadAssetsStaged() {
+    // 1단계: 첫 화면 & 즉시 플레이 핵심 에셋 우선 로드
+    const critical = [loadImage('player_basic', CFG.player.image)];
+    if (CFG.brand.stageBackground) {
+      critical.push(loadImage('bg_stage', CFG.brand.stageBackground));
+    }
+    await Promise.all(critical);
+
+    // 2단계: 인게임 소품 & 결과 배역 에셋 백그라운드 로드
+    const secondary = [
       loadImage('life_guinea', CFG.lives.icon),
       loadImage('bomb_silver', CFG.bomb.image),
       loadImage(`role_char_${CFG.fallbackRole.id}`, CFG.fallbackRole.characterImage),
     ];
-
-    if (CFG.brand.stageBackground) {
-      tasks.push(loadImage('bg_stage', CFG.brand.stageBackground));
-    }
-
     CFG.roles.forEach((role) => {
-      tasks.push(loadImage(`role_char_${role.id}`, role.characterImage));
+      secondary.push(loadImage(`role_char_${role.id}`, role.characterImage));
       role.items.forEach((it) => {
-        tasks.push(loadImage(`item_${it.id}`, it.image));
+        secondary.push(loadImage(`item_${it.id}`, it.image));
       });
     });
-
-    return Promise.all(tasks);
+    return Promise.all(secondary);
   }
 
   const ROLE_MAP = {};
@@ -493,10 +494,48 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
+  let guideRendered = false;
+  function ensureGuideRendered() {
+    if (guideRendered) return;
+    guideRendered = true;
+    const guideGrid = document.getElementById('guide-roles-grid');
+    guideGrid.innerHTML = CFG.roles
+      .map(
+        (r) => `
+        <div class="guide-card">
+          <div class="guide-card-top">
+            <img src="${r.characterImage}" alt="${r.name}" class="guide-sd" loading="lazy" decoding="async" draggable="false" />
+            <span class="guide-role-title">${r.name}</span>
+          </div>
+          <div class="guide-props">
+            ${r.items
+              .map(
+                (it) => `
+              <div class="guide-prop">
+                <img src="${it.image}" alt="${it.name}" loading="lazy" decoding="async" draggable="false" />
+                <span>${it.name}</span>
+              </div>`
+              )
+              .join('')}
+          </div>
+        </div>`
+      )
+      .join('');
+    setImgIfChanged(document.getElementById('guide-bomb-img'), CFG.bomb.image);
+    document.getElementById('guide-bomb-name').textContent = CFG.bomb.name;
+    document.getElementById('guide-bomb-desc').textContent = CFG.bomb.guideDesc;
+  }
+
+  function setImgIfChanged(imgEl, nextSrc) {
+    if (imgEl && nextSrc && imgEl.getAttribute('src') !== nextSrc) {
+      imgEl.src = nextSrc;
+    }
+  }
+
   function applyBrandConfig() {
     document.title = CFG.brand.title;
     document.getElementById('start-subtitle').innerHTML = CFG.brand.subtitle.replace(/\n/g, '<br />');
-    document.getElementById('start-hero-img').src = CFG.player.image;
+    setImgIfChanged(document.getElementById('start-hero-img'), CFG.player.image);
 
     // 로고 영역 (추후 로고 이미지 등록 시 점선 박스 대신 로고 이미지 노출)
     const logoSlot = document.getElementById('logo-slot');
@@ -505,7 +544,7 @@
     if (CFG.brand.logoImage) {
       logoSlot.classList.add('has-logo');
       logoLabel.hidden = true;
-      logoImg.src = CFG.brand.logoImage;
+      setImgIfChanged(logoImg, CFG.brand.logoImage);
       logoImg.hidden = false;
     } else {
       logoSlot.classList.remove('has-logo');
@@ -520,7 +559,7 @@
     if (CFG.brand.playButtonImage) {
       startBtn.classList.add('has-play-img');
       startBtnLabel.hidden = true;
-      startBtnImg.src = CFG.brand.playButtonImage;
+      setImgIfChanged(startBtnImg, CFG.brand.playButtonImage);
       startBtnImg.hidden = false;
     } else {
       startBtn.classList.remove('has-play-img');
@@ -529,36 +568,9 @@
     }
 
     elHudLifeIcons.forEach((img) => {
-      img.src = CFG.lives.icon;
+      setImgIfChanged(img, CFG.lives.icon);
     });
 
-    const guideGrid = document.getElementById('guide-roles-grid');
-    guideGrid.innerHTML = CFG.roles
-      .map(
-        (r) => `
-        <div class="guide-card">
-          <div class="guide-card-top">
-            <img src="${r.characterImage}" alt="${r.name}" class="guide-sd" draggable="false" />
-            <span class="guide-role-title">${r.name}</span>
-          </div>
-          <div class="guide-props">
-            ${r.items
-              .map(
-                (it) => `
-              <div class="guide-prop">
-                <img src="${it.image}" alt="${it.name}" draggable="false" />
-                <span>${it.name}</span>
-              </div>`
-              )
-              .join('')}
-          </div>
-        </div>`
-      )
-      .join('');
-
-    document.getElementById('guide-bomb-img').src = CFG.bomb.image;
-    document.getElementById('guide-bomb-name').textContent = CFG.bomb.name;
-    document.getElementById('guide-bomb-desc').textContent = CFG.bomb.guideDesc;
     syncSoundButtonUI();
   }
 
@@ -1203,6 +1215,10 @@
         ctx.fillStyle = `rgba(26, 20, 38, ${0.52 * b})`;
         ctx.fillRect(0, 56, W, H - 56);
       }
+    } else if (CFG.brand.stageBackground) {
+      // 배경 이미지 디코딩 전에는 CSS 배경(.game-box)이 즉시 보이도록 투명 유지
+      ctx.clearRect(0, 0, W, H);
+      return;
     } else {
       // 평상시 밝은 크림 무대 -> 중반 고난도 구간 진입 시 밤 공연장 조명 무드로 자연스럽게 전환
       const topWall = lerpColor('#faf5eb', '#252136', b);
@@ -1515,7 +1531,10 @@
     document.getElementById('btn-result-ranking').addEventListener('click', openRankingModal);
     document.getElementById('btn-refresh-ranking').addEventListener('click', fetchAndRenderRankingBoard);
 
-    document.getElementById('btn-open-guide').addEventListener('click', () => openModal(modalGuide));
+    document.getElementById('btn-open-guide').addEventListener('click', () => {
+      ensureGuideRendered();
+      openModal(modalGuide);
+    });
 
     document.querySelectorAll('[data-close-modal]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1588,15 +1607,15 @@
     requestAnimationFrame(mainLoop);
   }
 
-  async function init() {
+  function init() {
     setupHiDPICanvas();
     applyBrandConfig();
     bindUIEvents();
     syncTopHudDOM();
-    await preloadAllAssets();
-    restoreSession();
     lastFrameMs = performance.now();
     requestAnimationFrame(mainLoop);
+    preloadAssetsStaged();
+    restoreSession();
   }
 
   init();
