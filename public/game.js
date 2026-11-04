@@ -29,6 +29,10 @@
       loadImage(`role_char_${CFG.fallbackRole.id}`, CFG.fallbackRole.characterImage),
     ];
 
+    if (CFG.brand.stageBackground) {
+      tasks.push(loadImage('bg_stage', CFG.brand.stageBackground));
+    }
+
     CFG.roles.forEach((role) => {
       tasks.push(loadImage(`role_char_${role.id}`, role.characterImage));
       role.items.forEach((it) => {
@@ -507,6 +511,21 @@
       logoSlot.classList.remove('has-logo');
       logoLabel.hidden = false;
       logoImg.hidden = true;
+    }
+
+    // 시작하기 버튼 이미지 적용
+    const startBtn = document.getElementById('btn-start-game');
+    const startBtnLabel = document.getElementById('start-btn-label');
+    const startBtnImg = document.getElementById('start-btn-img');
+    if (CFG.brand.playButtonImage) {
+      startBtn.classList.add('has-play-img');
+      startBtnLabel.hidden = true;
+      startBtnImg.src = CFG.brand.playButtonImage;
+      startBtnImg.hidden = false;
+    } else {
+      startBtn.classList.remove('has-play-img');
+      startBtnLabel.hidden = false;
+      startBtnImg.hidden = true;
     }
 
     elHudLifeIcons.forEach((img) => {
@@ -1167,21 +1186,33 @@
 
   function drawStageBackground(nowSec) {
     const b = gameState.climaxBlend;
+    const bgImg = IMAGES.bg_stage;
 
-    // 평상시 밝은 크림 무대 -> 중반 고난도 구간 진입 시 밤 공연장 조명 무드로 자연스럽게 전환
-    const topWall = lerpColor('#faf5eb', '#252136', b);
-    const botWall = lerpColor('#f3eadb', '#38273c', b);
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, 726);
-    bgGrad.addColorStop(0, topWall);
-    bgGrad.addColorStop(1, botWall);
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, W, H);
+    if (bgImg) {
+      ctx.fillStyle = '#fdf9f1';
+      ctx.fillRect(0, 0, W, 58);
+      ctx.drawImage(bgImg, 0, 56, W, H - 56);
 
-    // 은은한 벽지 패턴 (평상시)
-    if (b < 0.95) {
-      ctx.fillStyle = `rgba(56, 44, 40, ${0.022 * (1 - b)})`;
-      for (let x = 20; x < W; x += 40) {
-        ctx.fillRect(x, 0, 14, 726);
+      if (b > 0.01) {
+        ctx.fillStyle = `rgba(26, 20, 38, ${0.52 * b})`;
+        ctx.fillRect(0, 56, W, H - 56);
+      }
+    } else {
+      // 평상시 밝은 크림 무대 -> 중반 고난도 구간 진입 시 밤 공연장 조명 무드로 자연스럽게 전환
+      const topWall = lerpColor('#faf5eb', '#252136', b);
+      const botWall = lerpColor('#f3eadb', '#38273c', b);
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 726);
+      bgGrad.addColorStop(0, topWall);
+      bgGrad.addColorStop(1, botWall);
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 은은한 벽지 패턴 (평상시)
+      if (b < 0.95) {
+        ctx.fillStyle = `rgba(56, 44, 40, ${0.022 * (1 - b)})`;
+        for (let x = 20; x < W; x += 40) {
+          ctx.fillRect(x, 0, 14, 726);
+        }
       }
     }
 
@@ -1206,20 +1237,22 @@
       ctx.restore();
     }
 
-    // 하단 나무 무대 바닥
-    const floorY = 724;
-    ctx.fillStyle = lerpColor('#d5b58f', '#694a44', b);
-    ctx.fillRect(0, floorY, W, H - floorY);
+    if (!bgImg) {
+      // 하단 나무 무대 바닥
+      const floorY = 724;
+      ctx.fillStyle = lerpColor('#d5b58f', '#694a44', b);
+      ctx.fillRect(0, floorY, W, H - floorY);
 
-    ctx.fillStyle = lerpColor('#c4a077', '#523735', b);
-    ctx.fillRect(0, floorY + 12, W, H - floorY - 12);
+      ctx.fillStyle = lerpColor('#c4a077', '#523735', b);
+      ctx.fillRect(0, floorY + 12, W, H - floorY - 12);
 
-    ctx.strokeStyle = '#382c28';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(0, floorY);
-    ctx.lineTo(W, floorY);
-    ctx.stroke();
+      ctx.strokeStyle = '#382c28';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, floorY);
+      ctx.lineTo(W, floorY);
+      ctx.stroke();
+    }
   }
 
   function drawBottomRoleTally() {

@@ -257,7 +257,7 @@ input {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 15cqh 7cqw 10.5cqh;
+  padding: 17cqh 7cqw 5.5cqh;
 }
 
 .title-center-hero {
@@ -289,13 +289,19 @@ input {
 }
 
 .logo-placeholder.has-logo {
+  width: 82%;
+  height: auto;
+  min-height: 0;
+  max-height: 21cqh;
+  margin-bottom: 1.2cqh;
   border: 0;
   background: transparent;
 }
 
 .brand-logo-img {
+  width: 100%;
   max-width: 100%;
-  max-height: 100%;
+  max-height: 21cqh;
   object-fit: contain;
 }
 
@@ -303,7 +309,7 @@ input {
   width: clamp(104px, 34cqw, 154px);
   height: clamp(104px, 34cqw, 154px);
   object-fit: contain;
-  margin-bottom: 1.8cqh;
+  margin-bottom: 1.4cqh;
   filter: drop-shadow(0 5px 0 rgba(56, 44, 40, 0.08));
   animation: heroFloat 2.6s ease-in-out infinite;
 }
@@ -316,8 +322,10 @@ input {
 .main-desc {
   margin: 0;
   font-size: clamp(12px, 3.2cqw, 14.5px);
+  font-weight: 600;
   line-height: 1.52;
-  color: var(--ink-soft);
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(252, 249, 243, 0.95), 0 0 8px rgba(252, 249, 243, 0.9);
 }
 
 .title-bottom-dock {
@@ -388,6 +396,29 @@ input {
 .btn-solid:active {
   transform: translateY(2px);
   box-shadow: 0 1px 0 var(--ink);
+}
+
+#btn-start-game.has-play-img {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#btn-start-game.has-play-img:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.start-btn-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .btn-pair {

@@ -4,10 +4,12 @@
  * 칼(실버) 이미지 수령 시 public/assets/bomb_silver.png 파일만 교체하시면 됩니다.
  */
 window.PKH_CONFIG = {
-  // 1. 타이틀 & 로고 설정 (추후 로고 이미지 수령 시 logoImage 에 경로를 넣으면 점선 '로고 영역' 대신 로고가 표시됩니다)
+  // 1. 타이틀 & 로고 설정
   brand: {
     title: 'PKH MAKER',
-    logoImage: '', // 예: 'assets/logo.png'
+    logoImage: 'assets/logo.png',
+    playButtonImage: 'assets/btn_play.png',
+    stageBackground: 'assets/bg_stage.png',
     subtitle: '떨어지는 소품을 모아\n오늘의 배역을 완성해 보세요.',
     desktopNote: '모은 소품의 개수에 따라\n마지막에 등장하는 캐릭터가 달라집니다.',
   },

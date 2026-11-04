@@ -67,7 +67,10 @@
 
         <div class="title-bottom-dock">
           <p class="simple-rules">좌우로 이동 &middot; 기회는 세 번</p>
-          <button type="button" id="btn-start-game" class="btn-solid">시작하기</button>
+          <button type="button" id="btn-start-game" class="btn-solid" aria-label="시작하기">
+            <span id="start-btn-label">시작하기</span>
+            <img id="start-btn-img" src="" alt="시작하기" class="start-btn-img" hidden draggable="false" />
+          </button>
           <div class="btn-pair">
             <button type="button" id="btn-open-ranking" class="btn-line">랭킹</button>
             <button type="button" id="btn-open-guide" class="btn-line">게임 방법</button>
