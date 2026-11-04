@@ -94,9 +94,9 @@ PKH-maker3/
 
 ## 6. 추후 고객 회신 후 반영할 체크리스트 (Pending Tasks)
 
-- [ ] **게임 정식 타이틀 & 시작 화면 서브 문구 반영**: `public/config.js` → `brand.title`, `brand.subtitle`
-- [ ] **로고 이미지 적용**: 로고 PNG 수령 후 `public/assets/`에 넣고 `public/config.js` → `brand.logoImage` 경로 설정 (시작 화면의 점선 `'로고 영역'` 박스가 자동으로 로고 이미지로 교체됨)
+- [x] **로고 · 플레이버튼 · 무대 배경 이미지 및 앤티크 UI 적용**: `public/assets/logo.png`, `public/assets/btn_play.png`, `public/assets/bg_stage.png` 반영 및 전 화면 앤티크 명판 테마 통일 완료
+- [x] **Cloudflare 프로덕션 배포 (`pkh-maker3.webplay.workers.dev`)**: D1 `pkh-maker3-db` 연동 및 GitHub `main` 브랜치 push 시 자동 배포 구성 완료
+- [ ] **게임 정식 타이틀 & 문구 확정 반영**: 고객 회신 시 `public/config.js` → `brand.title`, `brand.subtitle` 등 반영
 - [ ] **`실버(칼 모양)` 이미지 교체**: 현재 임시 `장미.png`로 들어가 있는 `public/assets/bomb_silver.png` 파일을 실제 칼 이미지로 교체
 - [ ] **결과 화면 배역별 문구 반영**: 고객이 작성한 5종(`사이먼`, `골드문트`, `필로스`, `레미`, `0개 획득 시 기본 경호`)의 `resultTitle` 및 `resultComment`를 `public/config.js` → `roles` / `fallbackRole`에 입력
 - [ ] **(선택) 점수 가산 옵션 확정**: 기본 점수(`100점`)만 유지할지, 콤보 보너스/생존 시간 점수를 켤지 고객 확인 후 `public/config.js` → `scoring` 반영
-- [ ] **Cloudflare 프로덕션 배포**: `npx wrangler d1 create pkh-maker3-db` 실행 후 발급된 `database_id`를 `wrangler.toml`에 기입하고 `npm run deploy` 실행

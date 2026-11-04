@@ -1189,7 +1189,7 @@
     const bgImg = IMAGES.bg_stage;
 
     if (bgImg) {
-      ctx.fillStyle = '#fdf9f1';
+      ctx.fillStyle = '#e8dccb';
       ctx.fillRect(0, 0, W, 58);
       ctx.drawImage(bgImg, 0, 56, W, H - 56);
 
@@ -1258,10 +1258,11 @@
   function drawBottomRoleTally() {
     if (gameState.phase === 'title') return;
 
-    // 하단 무대 바닥: 실시간 배역별 획득 개수 카운터 바
+    // 하단 무대 바닥: 실시간 배역별 획득 개수 카운터 바 (앤틱 명패 프레임)
     ctx.save();
     const barY = 738;
     const chipW = 98;
+    const chipH = 42;
     const gap = 8;
     const startX = (W - (chipW * 4 + gap * 3)) / 2;
 
@@ -1269,24 +1270,35 @@
       const cx = startX + idx * (chipW + gap);
       const cnt = gameState.roleCounts[role.id] || 0;
 
-      ctx.fillStyle = cnt > 0 ? 'rgba(252, 249, 243, 0.94)' : 'rgba(252, 249, 243, 0.72)';
-      ctx.strokeStyle = '#382c28';
-      ctx.lineWidth = 1.6;
-      roundRectPath(ctx, cx, barY, chipW, 42, 10);
+      // 좌하단 그림자
+      ctx.fillStyle = 'rgba(20, 12, 10, 0.42)';
+      roundRectPath(ctx, cx - 2.5, barY + 2.5, chipW, chipH, 2.5);
+      ctx.fill();
+
+      // 양피지 배경 & 외곽 테두리
+      ctx.fillStyle = cnt > 0 ? 'rgba(247, 240, 229, 0.96)' : 'rgba(236, 226, 212, 0.84)';
+      ctx.strokeStyle = '#261b18';
+      ctx.lineWidth = 1.8;
+      roundRectPath(ctx, cx, barY, chipW, chipH, 2.5);
       ctx.fill();
       ctx.stroke();
+
+      // 안쪽 앤틱 이중 실선
+      ctx.strokeStyle = cnt > 0 ? '#c4b199' : 'rgba(180, 162, 142, 0.7)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx + 2.5, barY + 2.5, chipW - 5, chipH - 5);
 
       const iconImg = IMAGES[`item_${role.items[0].id}`];
       if (iconImg) {
         ctx.drawImage(iconImg, cx + 6, barY + 7, 28, 28);
       }
-      ctx.fillStyle = '#5c4d47';
+      ctx.fillStyle = '#5c4942';
       ctx.font = '700 11px "Pretendard Variable", Pretendard, sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(role.name, cx + 38, barY + 15);
 
-      ctx.fillStyle = '#382c28';
+      ctx.fillStyle = '#261b18';
       ctx.font = '900 14px "Pretendard Variable", Pretendard, sans-serif';
       ctx.fillText(`${cnt}`, cx + 38, barY + 30);
     });
@@ -1354,7 +1366,7 @@
       ctx.font = '800 14px "Pretendard Variable", Pretendard, sans-serif';
       ctx.textAlign = 'center';
       ctx.lineWidth = 3;
-      ctx.strokeStyle = '#fcf9f3';
+      ctx.strokeStyle = '#f5ede1';
       ctx.strokeText(ft.text, ft.x, ft.y);
       ctx.fillStyle = ft.color;
       ctx.fillText(ft.text, ft.x, ft.y);
