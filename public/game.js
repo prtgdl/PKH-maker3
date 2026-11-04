@@ -632,6 +632,12 @@
   }
 
   async function handleAuthSubmit(nickname, pin) {
+    if (!nickname) {
+      return { ok: false, error: '닉네임을 입력해 주세요.' };
+    }
+    if (nickname.length > 10) {
+      return { ok: false, error: '닉네임은 최대 10자까지 입력해 주세요.' };
+    }
     try {
       const { data } = await apiFetch('/api/auth', {
         method: 'POST',

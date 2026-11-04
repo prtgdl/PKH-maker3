@@ -148,10 +148,13 @@ async function verifySessionToken(authHeader, db, secretSeed) {
 function validateNickname(raw) {
   if (typeof raw !== 'string') return { ok: false, error: '닉네임을 입력해 주세요.' };
   const trimmed = raw.trim().replace(/\s+/g, ' ');
-  if (trimmed.length < 2 || trimmed.length > 10) {
-    return { ok: false, error: '닉네임은 2~10자 사이로 입력해 주세요.' };
+  if (trimmed.length < 1) {
+    return { ok: false, error: '닉네임을 입력해 주세요.' };
   }
-  if (!/^[가-힣a-zA-Z0-9_.\-★☆♡♥ ]+$/.test(trimmed)) {
+  if (trimmed.length > 10) {
+    return { ok: false, error: '닉네임은 최대 10자까지 입력해 주세요.' };
+  }
+  if (!/^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9_.\-★☆♡♥ ]+$/.test(trimmed)) {
     return { ok: false, error: '닉네임에 사용할 수 없는 특수문자가 포함되어 있어요.' };
   }
   return { ok: true, value: trimmed };
