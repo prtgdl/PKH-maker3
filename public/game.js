@@ -800,7 +800,7 @@
     listEl.innerHTML = '<li class="rank-empty">불러오는 중...</li>';
 
     try {
-      const { data } = await apiFetch('/api/rankings?limit=50');
+      const { data } = await apiFetch('/api/rankings');
       if (data.ok) {
         renderRankingListDOM(data.rankings, data.totalPlayers, data.myRank);
         return;
@@ -832,7 +832,7 @@
     const myBarText = document.getElementById('my-rank-bar-text');
     const myLoginBtn = document.getElementById('btn-rank-login');
 
-    metaEl.textContent = totalPlayers > 0 ? `참여 ${totalPlayers.toLocaleString()}명 (상위 50위)` : '';
+    metaEl.textContent = totalPlayers > 0 ? `참여 ${totalPlayers.toLocaleString()}명` : '';
 
     if (!rankings || rankings.length === 0) {
       listEl.innerHTML = '<li class="rank-empty">아직 등록된 기록이 없습니다.</li>';

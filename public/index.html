@@ -6,9 +6,12 @@
   <meta name="theme-color" content="#cfc0af" />
   <title>P.K.H☆ MAKER3</title>
   <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/dosmyungjo-core.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/galmuri11-bold-core.woff2" crossorigin />
   <link rel="preload" as="image" href="assets/bg_stage.webp" fetchpriority="high" />
   <link rel="preload" as="image" href="assets/logo.webp" fetchpriority="high" />
   <link rel="preload" as="image" href="assets/char_guinea.webp" fetchpriority="high" />
+  <link rel="stylesheet" href="fonts.css" />
   <link rel="stylesheet" href="style.css" />
   <script defer src="config.js"></script>
   <script defer src="game.js"></script>
@@ -195,10 +198,6 @@
           </p>
 
           <div class="guide-grid" id="guide-roles-grid"></div>
-
-          <div class="guide-bonus-strip">
-            <span>무낙하 연속 획득 시 콤보 점수 &middot; 암전 구간 획득 시 보너스 점수</span>
-          </div>
 
           <div class="danger-guide-row">
             <img id="guide-bomb-img" src="assets/bomb_silver.png" alt="실버" class="danger-thumb" loading="lazy" decoding="async" draggable="false" />

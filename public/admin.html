@@ -6,20 +6,10 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>P.K.H☆ MAKER3 관리자</title>
   <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/dosmyungjo-core.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/galmuri11-bold-core.woff2" crossorigin />
+  <link rel="stylesheet" href="fonts.css" />
   <style>
-    @font-face {
-      font-family: "DOSMyungjo";
-      src: url("assets/fonts/dosmyungjo.woff2") format("woff2");
-      font-weight: 400;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: "Galmuri11Bold";
-      src: url("assets/fonts/galmuri11-bold.woff2") format("woff2");
-      font-weight: 700;
-      font-display: swap;
-    }
-
     :root {
       --ink: #261b18;
       --ink-soft: #635048;
@@ -542,7 +532,6 @@
       </div>
       <div class="topbar-actions">
         <button type="button" id="btn-reload" class="btn btn-gold">새로고침</button>
-        <button type="button" id="btn-export-csv" class="btn">유저·랭킹 CSV 다운로드</button>
         <a href="/" class="btn" style="text-decoration:none;">게임 화면 열기</a>
         <button type="button" id="btn-admin-logout" class="btn btn-wood">로그아웃</button>
       </div>
@@ -939,55 +928,6 @@
         }
       }
 
-      function exportUsersCSV() {
-        const rows = getFilteredUsers();
-        const header = [
-          '순위',
-          '닉네임',
-          '엔딩배역',
-          '최고점수',
-          '사이먼수집',
-          '골드문트수집',
-          '필로스수집',
-          '레미수집',
-          '버틴시간(초)',
-          '플레이횟수',
-          '최고기록갱신시각(KST)',
-          '최초등록시각(KST)',
-        ];
-        const csvLines = [
-          header.join(','),
-          ...rows.map((u) => {
-            const rc = u.bestRoleCounts || {};
-            const meta = CHAR_META[u.bestCharacter] || CHAR_META.guinea;
-            const cols = [
-              u.rank || '',
-              `"${String(u.nickname).replace(/"/g, '""')}"`,
-              `"${meta.name}"`,
-              u.bestScore,
-              rc.simon || 0,
-              rc.goldmund || 0,
-              rc.philos || 0,
-              rc.remy || 0,
-              u.bestSurvivalSec,
-              u.playCount,
-              `"${formatKST(u.updatedAt)}"`,
-              `"${formatKST(u.createdAt)}"`,
-            ];
-            return cols.join(',');
-          }),
-        ];
-        const blob = new Blob(['\uFEFF' + csvLines.join('\r\n')], {
-          type: 'text/csv;charset=utf-8;',
-        });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        const today = new Date().toISOString().slice(0, 10);
-        a.download = `pkh-maker3-rankings-${today}.csv`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
-
       // 이벤트 바인딩
       document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1019,7 +959,6 @@
       });
 
       document.getElementById('btn-reload').addEventListener('click', loadOverview);
-      document.getElementById('btn-export-csv').addEventListener('click', exportUsersCSV);
 
       document.querySelectorAll('[data-tab]').forEach((btn) => {
         btn.addEventListener('click', () => {

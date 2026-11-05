@@ -5,7 +5,7 @@
  *   POST /api/auth             — 닉네임 + PIN 번호 원스텝 신규등록 또는 로그인
  *   GET  /api/me               — 세션 토큰으로 내 프로필 & 현재 등수 조회
  *   POST /api/score            — 게임 종료 후 점수 & 결과 배역 & 세부 수집 개수 저장
- *   GET  /api/rankings         — TOP 50 전체 랭킹 + 총 참여자 수 + 내 순위 조회
+ *   GET  /api/rankings         — 전체 랭킹 + 총 참여자 수 + 내 순위 조회
  *
  * 관리자 엔드포인트 (/admin 비밀번호 인증 전용):
  *   POST   /api/admin/login        — 관리자 비밀번호 인증 후 세션 토큰 발급
@@ -257,21 +257,15 @@ async function getUserRank(db, user) {
   return row ? Number(row.rank) : null;
 }
 
-async function getRankingsPayload(db, currentUser = null, limit = 50) {
+async function getRankingsPayload(db, currentUser = null) {
   const { results } = await db
     .prepare(
       `SELECT id, nickname, best_score, best_character, best_survival_sec, updated_at
        FROM users
        WHERE best_score > 0
-       ORDER BY best_score DESC, updated_at ASC
-       LIMIT ?`
+       ORDER BY best_score DESC, updated_at ASC`
     )
-    .bind(limit)
     .all();
-
-  const countRow = await db
-    .prepare(`SELECT COUNT(*) AS cnt FROM users WHERE best_score > 0`)
-    .first();
 
   const rankings = (results || []).map((r, idx) => ({
     rank: idx + 1,
@@ -289,7 +283,7 @@ async function getRankingsPayload(db, currentUser = null, limit = 50) {
 
   return {
     rankings,
-    totalPlayers: countRow ? Number(countRow.cnt) : 0,
+    totalPlayers: rankings.length,
     myRank,
   };
 }
@@ -593,15 +587,14 @@ export default {
         return jsonResponse({ ok: true, user: formatUserProfile(user, myRank) });
       }
 
-      // 3) GET /api/rankings — 랭킹 보드 조회
+      // 3) GET /api/rankings — 전체 랭킹 보드 조회
       if (url.pathname === '/api/rankings' && request.method === 'GET') {
         const user = await verifySessionToken(
           request.headers.get('Authorization'),
           env.DB,
           secretSeed
         );
-        const limitParam = Math.min(100, Math.max(5, Number(url.searchParams.get('limit')) || 50));
-        const board = await getRankingsPayload(env.DB, user, limitParam);
+        const board = await getRankingsPayload(env.DB, user);
         return jsonResponse({
           ok: true,
           ...board,
@@ -669,7 +662,7 @@ export default {
             .first();
         }
 
-        const board = await getRankingsPayload(env.DB, updatedUser, 50);
+        const board = await getRankingsPayload(env.DB, updatedUser);
 
         return jsonResponse({
           ok: true,
