@@ -1164,8 +1164,8 @@
                 )
               : 0;
           const isBlackout = gameState.climaxActive || gameState.climaxBlend > 0.45;
-          const blackoutBonus = isBlackout ? CFG.scoring.blackoutBonusScore || 0 : 0;
-          const gained = CFG.scoring.baseItemScore + comboBonus + blackoutBonus;
+          const multiplier = isBlackout ? CFG.scoring.blackoutMultiplier || 2 : 1;
+          const gained = Math.round((CFG.scoring.baseItemScore + comboBonus) * multiplier);
           gameState.score += gained;
 
           p.scaleX = 1.12;
@@ -1177,10 +1177,10 @@
           let floatLabel = `+${gained}`;
           let floatColor = '#261b18';
           if (isBlackout && gameState.combo >= 2) {
-            floatLabel = `${gameState.combo}연속·암전 +${gained}`;
+            floatLabel = `${gameState.combo}연속·암전×2 +${gained}`;
             floatColor = '#dfbe6f';
           } else if (isBlackout) {
-            floatLabel = `암전 +${gained}`;
+            floatLabel = `암전×2 +${gained}`;
             floatColor = '#dfbe6f';
           } else if (gameState.combo >= 2) {
             floatLabel = `${gameState.combo}연속 +${gained}`;

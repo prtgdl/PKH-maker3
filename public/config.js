@@ -128,12 +128,12 @@ window.PKH_CONFIG = {
     resultComment: '꾸...이... 꾸...이꾸이... (재..도전... 재도전...)',
   },
 
-  // 5. 점수 설정 (기본 100점 + 무낙하 연속 콤보당 +10점(최대 +100점) + 암전 구간 +50점)
+  // 5. 점수 설정 (기본 100점 + 연속 콤보당 +10점(최대 +100점), 암전 구간 전체 2배)
   scoring: {
     baseItemScore: 100,
     comboStepScore: 10,
     maxComboBonus: 100,
-    blackoutBonusScore: 50,
+    blackoutMultiplier: 2,
     survivalTickScore: 0,
     itemSize: 54,
     itemHitboxScale: 0.92,

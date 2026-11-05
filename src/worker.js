@@ -621,8 +621,8 @@ export default {
         const roleCountsObj = sanitizeRoleCounts(body.roleCounts);
         const roleCountsJson = JSON.stringify(roleCountsObj);
 
-        // 비정상 수치 방지(콤보·암전 보너스 포함 물리적 상한 체크)
-        const maxReasonableScore = Math.max(1500, (survivalSec + 10) * 2400, (caughtCount + 5) * 500);
+        // 비정상 수치 방지(콤보 최대 +100 및 암전 ×2 배수 포함 물리적 상한 체크)
+        const maxReasonableScore = Math.max(1500, (survivalSec + 10) * 3200, (caughtCount + 5) * 600);
         if (rawScore < 0 || rawScore > maxReasonableScore || rawScore > 9999999) {
           return jsonResponse({ ok: false, error: '유효하지 않은 점수 데이터입니다.' }, 400);
         }
