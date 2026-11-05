@@ -964,14 +964,15 @@
     }
   }
 
-  function addFloatingText(x, y, text, color = '#382c28') {
+  function addFloatingText(x, y, text, color = '#261b18', comboLabel = '') {
     gameState.floatingTexts.push({
       x,
       y,
       text,
+      comboLabel,
       color,
-      life: 0.65,
-      maxLife: 0.65,
+      life: 0.68,
+      maxLife: 0.68,
     });
   }
 
@@ -1156,12 +1157,10 @@
           gameState.lastRoleOrder.push(it.roleId);
           if (gameState.lastRoleOrder.length > 30) gameState.lastRoleOrder.shift();
 
+          const comboCount = Math.max(0, gameState.combo - 1);
           const comboBonus =
-            gameState.combo >= 2
-              ? Math.min(
-                  CFG.scoring.maxComboBonus,
-                  (gameState.combo - 1) * CFG.scoring.comboStepScore
-                )
+            comboCount >= 1
+              ? Math.min(CFG.scoring.maxComboBonus, comboCount * CFG.scoring.comboStepScore)
               : 0;
           const isBlackout = gameState.climaxActive || gameState.climaxBlend > 0.45;
           const multiplier = isBlackout ? CFG.scoring.blackoutMultiplier || 2 : 1;
@@ -1174,19 +1173,9 @@
           sound.playCatch(gameState.combo);
           emitParticles(it.x, it.y, isBlackout ? '#dfbe6f' : it.themeColor, 7);
 
-          let floatLabel = `+${gained}`;
-          let floatColor = '#261b18';
-          if (isBlackout && gameState.combo >= 2) {
-            floatLabel = `${gameState.combo}연속·암전×2 +${gained}`;
-            floatColor = '#dfbe6f';
-          } else if (isBlackout) {
-            floatLabel = `암전×2 +${gained}`;
-            floatColor = '#dfbe6f';
-          } else if (gameState.combo >= 2) {
-            floatLabel = `${gameState.combo}연속 +${gained}`;
-            floatColor = '#9c4538';
-          }
-          addFloatingText(p.x, CFG.player.y - 66, floatLabel, floatColor);
+          const floatColor = isBlackout ? '#dfbe6f' : comboCount >= 1 ? '#9c4538' : '#261b18';
+          const comboLabel = comboCount >= 1 ? `${comboCount} COMBO` : '';
+          addFloatingText(p.x, CFG.player.y - 64, `+${gained}`, floatColor, comboLabel);
           continue;
         }
       }
@@ -1318,32 +1307,6 @@
   function drawBottomRoleTally() {
     if (gameState.phase === 'title') return;
 
-    // 상단 상태 띠 (암전 보너스 구간 또는 무낙하 연속 콤보 표시)
-    if (gameState.phase === 'playing') {
-      const isBlackout = gameState.climaxActive || gameState.climaxBlend > 0.45;
-      const tags = [];
-      if (isBlackout) tags.push(`암전 보너스 +${CFG.scoring.blackoutBonusScore || 50}`);
-      if (gameState.combo >= 2) tags.push(`${gameState.combo}연속 콤보`);
-      if (tags.length > 0) {
-        ctx.save();
-        const badgeText = tags.join(' · ');
-        ctx.font = '700 11px "Galmuri11Bold", "DOSMyungjo", monospace';
-        const tw = Math.ceil(ctx.measureText(badgeText).width) + 20;
-        const bx = Math.round((W - tw) / 2);
-        const by = 64;
-        ctx.fillStyle = isBlackout ? 'rgba(30, 20, 28, 0.9)' : 'rgba(245, 237, 225, 0.92)';
-        ctx.fillRect(bx, by, tw, 22);
-        ctx.strokeStyle = isBlackout ? '#dfbe6f' : '#261b18';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(bx, by, tw, 22);
-        ctx.fillStyle = isBlackout ? '#f8e3a3' : '#261b18';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(badgeText, W / 2, by + 11.5);
-        ctx.restore();
-      }
-    }
-
     // 하단 무대 바닥: 실시간 배역별 획득 개수 카운터 바 (픽셀 명패 프레임)
     ctx.save();
     const barY = 738;
@@ -1446,18 +1409,36 @@
       ctx.restore();
     });
 
-    // 획득 점수 플로팅 (픽셀 폰트)
+    // 획득 점수 플로팅 (픽셀 폰트, 콤보 시 '1 COMBO' 등 함께 표시)
     gameState.floatingTexts.forEach((ft) => {
       ctx.save();
+      const progress = 1 - ft.life / ft.maxLife;
       ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
-      ctx.font = '700 12.5px "Galmuri11Bold", "DOSMyungjo", monospace';
+      const popScale = progress < 0.18 ? 1 + (0.18 - progress) * 0.9 : 1;
+      const rx = Math.round(ft.x);
+      const ry = Math.round(ft.y);
+      ctx.translate(rx, ry);
+      ctx.scale(popScale, popScale);
       ctx.textAlign = 'center';
-      ctx.lineWidth = 3.5;
+
       const darkOutline = ft.color === '#dfbe6f' || gameState.climaxBlend > 0.45;
-      ctx.strokeStyle = darkOutline ? '#261b18' : '#f5ede1';
-      ctx.strokeText(ft.text, Math.round(ft.x), Math.round(ft.y));
+      const outlineColor = darkOutline ? '#261b18' : '#f5ede1';
+
+      if (ft.comboLabel) {
+        ctx.font = '700 10.5px "Galmuri11Bold", "DOSMyungjo", monospace';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = outlineColor;
+        ctx.strokeText(ft.comboLabel, 0, -14);
+        ctx.fillStyle = darkOutline ? '#f7e4a8' : '#6e342b';
+        ctx.fillText(ft.comboLabel, 0, -14);
+      }
+
+      ctx.font = '700 13.5px "Galmuri11Bold", "DOSMyungjo", monospace';
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = outlineColor;
+      ctx.strokeText(ft.text, 0, 0);
       ctx.fillStyle = ft.color;
-      ctx.fillText(ft.text, Math.round(ft.x), Math.round(ft.y));
+      ctx.fillText(ft.text, 0, 0);
       ctx.restore();
     });
 
