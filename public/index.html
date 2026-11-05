@@ -4,23 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#cfc0af" />
-  <title>PKH MAKER</title>
+  <title>P.K.H☆ MAKER3</title>
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="preload" as="image" href="assets/bg_stage.webp" fetchpriority="high" />
   <link rel="preload" as="image" href="assets/logo.webp" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/char_guinea.webp" fetchpriority="high" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" /></noscript>
   <script defer src="config.js"></script>
   <script defer src="game.js"></script>
 </head>
 <body>
   <main class="app-wrap">
     <section class="game-box" aria-label="게임 화면">
-      <!-- 상단 통합 헤더 바 (화면이 작아져도 절대 겹치지 않는 반응형 상단바) -->
+      <!-- 상단 통합 헤더 바 -->
       <header class="top-stage-bar" id="top-stage-bar">
-        <!-- 좌측: 시작 화면에서는 닉네임 버튼 / 플레이 중에는 목숨 3개 표시 -->
         <div class="top-left-slot">
           <button type="button" id="btn-open-auth" class="user-chip-btn">
             <span id="account-pill-text">닉네임 등록</span>
@@ -32,14 +29,12 @@
           </div>
         </div>
 
-        <!-- 중앙: 플레이 중 시간(00:00) & 점수 -->
         <div id="hud-stats" class="hud-stats-pill" hidden>
           <span id="hud-time" class="hud-time">00:00</span>
           <span class="hud-divider"></span>
           <strong id="hud-score" class="hud-score">0</strong>
         </div>
 
-        <!-- 우측: 소리(♪) & 일시정지(❚❚) -->
         <div class="hud-buttons">
           <button id="btn-sound" class="circle-icon-btn" type="button" aria-label="소리 켜기/끄기" aria-pressed="true" title="소리 켜기/끄기">
             <span id="sound-label">♪</span>
@@ -57,17 +52,18 @@
         <div class="title-center-hero">
           <div id="logo-slot" class="logo-placeholder has-logo">
             <span id="logo-placeholder-label" hidden>로고 영역</span>
-            <img id="brand-logo-img" src="assets/logo.webp" alt="게임 로고" class="brand-logo-img" fetchpriority="high" decoding="async" draggable="false" />
+            <img id="brand-logo-img" src="assets/logo.webp" alt="P.K.H☆ MAKER3" class="brand-logo-img" fetchpriority="high" decoding="async" draggable="false" />
           </div>
 
-          <img id="start-hero-img" src="assets/char_basic.webp" alt="박경호 캐릭터" class="title-hero-img" fetchpriority="high" decoding="async" draggable="false" />
+          <img id="start-hero-img" src="assets/char_guinea.webp" alt="기니피그" class="title-hero-img" fetchpriority="high" decoding="async" draggable="false" />
 
           <p class="main-desc" id="start-subtitle">
-            떨어지는 소품을 모아<br />오늘의 배역을 완성해 보세요.
+            P.K.H☆의 운명을 결정할<br />운명의 징표를 모아보세요
           </p>
         </div>
 
         <div class="title-bottom-dock">
+          <p class="simple-rules" id="start-simple-rules">좌우로 이동 &middot; 주어진 기회는 세 번!</p>
           <button type="button" id="btn-start-game" class="btn-solid has-play-img" aria-label="시작하기">
             <span id="start-btn-label" hidden>시작하기</span>
             <img id="start-btn-img" src="assets/btn_play.webp" alt="시작하기" class="start-btn-img" fetchpriority="high" decoding="async" draggable="false" />
@@ -100,15 +96,15 @@
           </div>
 
           <div class="result-char-frame" id="result-portrait-bg">
-            <img id="result-char-img" src="assets/char_simon.png" alt="변신 결과 캐릭터" class="result-char-img" draggable="false" />
+            <img id="result-char-img" src="assets/char_guinea.webp" alt="" class="result-char-img" draggable="false" />
           </div>
 
-          <h2 class="result-name" id="result-title">사이먼</h2>
-          <p class="result-copy" id="result-comment"></p>
+          <h2 id="result-title" class="result-name">사이먼</h2>
+          <p id="result-comment" class="result-copy"></p>
 
           <div class="score-summary-row">
             <div class="score-cell">
-              <span>점수</span>
+              <span>최종 점수</span>
               <strong id="result-score">0</strong>
             </div>
             <div class="score-sep"></div>
@@ -118,7 +114,7 @@
             </div>
           </div>
 
-          <div class="tally-grid" id="result-collected-list" aria-label="배역별 모은 소품 수"></div>
+          <div class="tally-grid" id="result-collected-list"></div>
 
           <div class="rank-notice-box" id="result-rank-banner">
             <span id="result-rank-msg">기록 확인 중...</span>
@@ -193,18 +189,22 @@
         <div class="modal-box guide-modal-box">
           <button type="button" class="close-x" data-close-modal="modal-guide" aria-label="닫기">&times;</button>
           <h3 id="guide-modal-title" class="modal-heading">게임 방법</h3>
-          <p class="modal-subcopy">
-            좌우로 움직여 배역별 소품을 모아 보세요.<br />
-            게임이 끝날 때 가장 많이 모은 소품의 캐릭터로 변합니다.
+          <p class="modal-subcopy" id="guide-intro-text">
+            좌우로 움직이며 운명을 상징하는 징표를 모아보세요.<br />
+            당신의 선택에 따라 P.K.H☆의 운명이 결정됩니다.
           </p>
 
           <div class="guide-grid" id="guide-roles-grid"></div>
+
+          <div class="guide-bonus-strip">
+            <span>무낙하 연속 획득 시 콤보 점수 &middot; 암전 구간 획득 시 보너스 점수</span>
+          </div>
 
           <div class="danger-guide-row">
             <img id="guide-bomb-img" src="assets/bomb_silver.png" alt="실버" class="danger-thumb" loading="lazy" decoding="async" draggable="false" />
             <div class="danger-text">
               <strong id="guide-bomb-name">실버</strong>
-              <p id="guide-bomb-desc">닿으면 기회가 한 번 줄어듭니다. 세 번 닿으면 게임이 끝나요.</p>
+              <p id="guide-bomb-desc">위험한 소품입니다! 닿을 때마다 남은 기회가 하나씩 줄어듭니다. 세 번의 실수로 P.K.H☆ 여정이 끝날 수 있으니 조심하세요!</p>
             </div>
           </div>
         </div>

@@ -87,16 +87,18 @@ PKH-maker3/
   - 발급된 HMAC 서명 세션 토큰은 브라우저 `localStorage`에 유지되며, 비로그인 상태로 먼저 플레이하더라도 **결과 화면에서 바로 닉네임/PIN을 등록해 방금 세운 점수를 즉시 저장**할 수 있다.
 - **랭킹 보드 (`GET /api/rankings`, `POST /api/score`)**:
   - 최고 점수(`best_score`) 내림차순, 동점 시 먼저 달성한 시각(`updated_at`) 오름차순 정렬.
-  - 화면의 랭킹 리스트에는 군더더기 없이 **`순위 · 닉네임 · 최고 점수`**만 깔끔하게 표시된다.
-  - Worker 첫 실행 시 `ensureSchema()`가 자동으로 테이블 생성 여부를 확인하므로 배포 실수로 테이블이 없더라도 에러 없이 자동 초기화된다.
+  - 화면의 랭킹 리스트에는 **`순위 · 닉네임 · 엔딩 캐릭터 아이콘 · 최고 점수`**가 표시된다.
+  - Worker 첫 실행 시 `ensureSchema()`가 자동으로 테이블 및 신규 컬럼(`best_role_counts`, `role_counts`)을 확인·생성한다.
+- **관리자 페이지 (`/admin`, `public/admin.html`, `/api/admin/*`)**:
+  - 관리자 비밀번호(`env.ADMIN_PASSWORD` 기본값 `0731`) 인증 후 현황 요약, 유저 & 랭킹 통합 조회(배역별 세부 수집 개수 포함, 검색/정렬/CSV 다운로드/개별 삭제), 매 판 플레이 기록 로그, 점수만 초기화 / 전체 완전 초기화를 지원한다.
 
 ---
 
 ## 6. 추후 고객 회신 후 반영할 체크리스트 (Pending Tasks)
 
-- [x] **로고 · 플레이버튼 · 무대 배경 이미지 및 앤티크 UI 적용**: `public/assets/logo.webp`, `public/assets/btn_play.webp`, `public/assets/bg_stage.webp` 경량화 반영 및 전 화면 앤티크 명판 테마 통일 완료
+- [x] **로고 · 플레이버튼 · 무대 배경 이미지 및 고풍 픽셀 UI 적용**: `logo.webp`, `btn_play.webp`, `bg_stage.webp`, `char_guinea.webp` 및 `DOSMyungjo` / `Galmuri11Bold` 픽셀 서체 통일 완료
 - [x] **Cloudflare 프로덕션 배포 (`pkh-maker3.webplay.workers.dev`)**: D1 `pkh-maker3-db` 연동 및 GitHub `main` 브랜치 push 시 자동 배포 구성 완료
-- [ ] **게임 정식 타이틀 & 문구 확정 반영**: 고객 회신 시 `public/config.js` → `brand.title`, `brand.subtitle` 등 반영
+- [x] **정식 타이틀 · 게임방법 · 6종 엔딩(4배역 + 동점 히든 `P.K.H☆` + 0점 `기니피그`) 문구 반영 완료**
+- [x] **무낙하 연속 콤보 점수(`+10`, 최대 `+100`) & 암전 구간 보너스 점수(`+50`) 반영 완료**
+- [x] **관리자 페이지(`/admin`) 구현 완료**
 - [ ] **`실버(칼 모양)` 이미지 교체**: 현재 임시 `장미.png`로 들어가 있는 `public/assets/bomb_silver.png` 파일을 실제 칼 이미지로 교체
-- [ ] **결과 화면 배역별 문구 반영**: 고객이 작성한 5종(`사이먼`, `골드문트`, `필로스`, `레미`, `0개 획득 시 기본 경호`)의 `resultTitle` 및 `resultComment`를 `public/config.js` → `roles` / `fallbackRole`에 입력
-- [ ] **(선택) 점수 가산 옵션 확정**: 기본 점수(`100점`)만 유지할지, 콤보 보너스/생존 시간 점수를 켤지 고객 확인 후 `public/config.js` → `scoring` 반영

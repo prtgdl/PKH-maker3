@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>P.K.H☆ MAKER3 관리자</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <style>
+    @font-face {
+      font-family: "DOSMyungjo";
+      src: url("assets/fonts/dosmyungjo.woff2") format("woff2");
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Galmuri11Bold";
+      src: url("assets/fonts/galmuri11-bold.woff2") format("woff2");
+      font-weight: 700;
+      font-display: swap;
+    }
+
+    :root {
+      --ink: #261b18;
+      --ink-soft: #635048;
+      --bg-outer: #d7c9b7;
+      --card: #f7f0e5;
+      --sub: #ece1d0;
+      --line: #bda992;
+      --red: #9c4538;
+      --wood: #462d28;
+      --gold: #dfbe6f;
+      --font-serif: "DOSMyungjo", "Malgun Gothic", sans-serif;
+      --font-ui: "Galmuri11Bold", "Malgun Gothic", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: var(--bg-outer);
+      background-image: radial-gradient(rgba(38, 27, 24, 0.08) 1px, transparent 0);
+      background-size: 6px 6px;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* 로그인 화면 */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--card);
+      border: 2.5px solid var(--ink);
+      box-shadow: inset 0 0 0 2px #fbf7f0, inset 0 0 0 4px var(--line), -6px 6px 0 rgba(24, 15, 13, 0.35);
+      padding: 28px 24px;
+      text-align: center;
+    }
+
+    .login-title {
+      margin: 0 0 6px;
+      font-family: var(--font-serif);
+      font-size: 22px;
+    }
+
+    .login-desc {
+      margin: 0 0 18px;
+      color: var(--ink-soft);
+      font-size: 13px;
+    }
+
+    .pw-input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 2px solid var(--ink);
+      background: #fffdf9;
+      font-size: 16px;
+      color: var(--ink);
+      text-align: center;
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+    }
+
+    .pw-input:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 2px rgba(156, 69, 56, 0.28);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border: 2px solid var(--ink);
+      background: #fbf7f0;
+      color: var(--ink);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: -2.5px 2.5px 0 rgba(24, 15, 13, 0.3);
+      transition: transform 0.08s steps(2, end), box-shadow 0.08s steps(2, end);
+    }
+    .btn:hover {
+      transform: translate(1px, -1px);
+      box-shadow: -3.5px 3.5px 0 rgba(24, 15, 13, 0.36);
+    }
+    .btn:active {
+      transform: translate(-1.5px, 1.5px);
+      box-shadow: 0 0 0 rgba(24, 15, 13, 0.3);
+    }
+    .btn-primary {
+      background: var(--red);
+      color: #f8f2ea;
+    }
+    .btn-wood {
+      background: var(--wood);
+      color: #f6efe6;
+    }
+    .btn-gold {
+      background: var(--gold);
+      color: var(--ink);
+    }
+    .btn-danger-line {
+      background: #f9e8e6;
+      border-color: #8f2d28;
+      color: #84201b;
+      padding: 5px 9px;
+      font-size: 11px;
+    }
+    .btn-block {
+      width: 100%;
+    }
+
+    .err-msg {
+      margin: 0 0 12px;
+      padding: 8px 10px;
+      background: #f8e5e4;
+      border: 1.5px solid var(--red);
+      color: #811f1a;
+      font-size: 12.5px;
+    }
+
+    /* 대시보드 레이아웃 */
+    .admin-shell {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 22px 18px 60px;
+    }
+
+    .admin-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--card);
+      border: 2.5px solid var(--ink);
+      box-shadow: inset 0 0 0 2px #fbf7f0, -4px 4px 0 rgba(24, 15, 13, 0.28);
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+
+    .topbar-left h1 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 20px;
+    }
+    .topbar-left p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* 요약 카드 */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 2px solid var(--ink);
+      box-shadow: inset 0 0 0 1.5px #fbf7f0, -3px 3px 0 rgba(24, 15, 13, 0.24);
+      padding: 14px 16px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-family: var(--font-ui);
+      font-size: 24px;
+      color: var(--ink);
+    }
+
+    .stat-sub {
+      margin-top: 3px;
+      font-size: 11.5px;
+      color: var(--ink-soft);
+    }
+
+    /* 배역별 엔딩 비율 박스 */
+    .ratio-panel {
+      background: var(--card);
+      border: 2px solid var(--ink);
+      box-shadow: inset 0 0 0 1.5px #fbf7f0, -3px 3px 0 rgba(24, 15, 13, 0.24);
+      padding: 14px 16px;
+      margin-bottom: 18px;
+    }
+
+    .ratio-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .ratio-header h2 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 16px;
+    }
+
+    .ratio-header span {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .ratio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+      gap: 8px;
+    }
+
+    .ratio-chip {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      background: #fbf8f2;
+      border: 1.5px solid var(--line);
+    }
+
+    .ratio-chip img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      background: var(--sub);
+      border: 1px solid var(--ink);
+      padding: 2px;
+      flex-shrink: 0;
+    }
+
+    .ratio-meta {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .ratio-meta strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .ratio-meta small {
+      display: block;
+      font-size: 11.5px;
+      color: var(--ink-soft);
+    }
+
+    /* 탭 & 본문 패널 */
+    .main-panel {
+      background: var(--card);
+      border: 2.5px solid var(--ink);
+      box-shadow: inset 0 0 0 2px #fbf7f0, -4px 4px 0 rgba(24, 15, 13, 0.28);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .tabs-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      padding: 8px 14px;
+      border: 2px solid var(--ink);
+      background: var(--sub);
+      color: var(--ink);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--wood);
+      color: #f8f2ea;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .search-input,
+    .select-box {
+      padding: 8px 10px;
+      border: 1.5px solid var(--ink);
+      background: #fffdf9;
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .search-input {
+      min-width: 210px;
+      flex: 1 1 210px;
+      max-width: 320px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1.5px solid var(--ink);
+      background: #fffdf9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 880px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #dfd2c1;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      background: var(--sub);
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      color: var(--ink);
+      border-bottom: 1.5px solid var(--ink);
+    }
+
+    tbody tr:hover {
+      background: #f6efe4;
+    }
+
+    .num-col {
+      font-family: var(--font-ui);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .char-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .char-cell img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      background: var(--sub);
+      border: 1px solid var(--ink);
+    }
+
+    .role-breakdown {
+      display: inline-flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .role-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 11.5px;
+      background: var(--sub);
+      border: 1px solid #cbb8a1;
+    }
+    .role-pill b {
+      font-family: var(--font-ui);
+      margin-left: 2px;
+    }
+
+    .empty-row {
+      text-align: center;
+      padding: 28px 10px;
+      color: var(--ink-soft);
+    }
+
+    /* 위험 구역 (전체 초기화) */
+    .danger-zone {
+      background: #f7eae8;
+      border: 2.5px solid #8a2c27;
+      box-shadow: -4px 4px 0 rgba(38, 18, 16, 0.25);
+      padding: 16px 18px;
+    }
+
+    .danger-zone h2 {
+      margin: 0 0 6px;
+      font-family: var(--font-serif);
+      font-size: 17px;
+      color: #7c1f1a;
+    }
+
+    .danger-zone p {
+      margin: 0 0 14px;
+      font-size: 12.5px;
+      color: #4f2a27;
+    }
+
+    .danger-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* 확인 모달 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(20, 12, 10, 0.62);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .confirm-modal {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 2.5px solid var(--ink);
+      box-shadow: inset 0 0 0 2px #fbf7f0, -6px 6px 0 rgba(20, 12, 10, 0.45);
+      padding: 22px 20px;
+    }
+
+    .confirm-modal h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-serif);
+      font-size: 18px;
+      color: #7c1f1a;
+    }
+
+    .confirm-modal p {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .confirm-input {
+      width: 100%;
+      padding: 9px 10px;
+      border: 2px solid var(--ink);
+      background: #fffdf9;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .confirm-btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 1. 관리자 비밀번호 로그인 -->
+  <section id="login-view" class="login-wrap">
+    <div class="login-card">
+      <h1 class="login-title">P.K.H☆ MAKER3 관리</h1>
+      <p class="login-desc">관리자 비밀번호를 입력해 주세요.</p>
+      <p id="login-err" class="err-msg" hidden></p>
+      <form id="login-form">
+        <input
+          type="password"
+          id="admin-pw-input"
+          class="pw-input"
+          placeholder="비밀번호"
+          autocomplete="current-password"
+          required
+        />
+        <button type="submit" id="btn-login" class="btn btn-primary btn-block">관리페이지 입장</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- 2. 관리자 대시보드 -->
+  <main id="dashboard-view" class="admin-shell" hidden>
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <h1>P.K.H☆ MAKER3 운영 관리페이지</h1>
+        <p id="last-updated-text">데이터 불러오는 중...</p>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" id="btn-reload" class="btn btn-gold">새로고침</button>
+        <button type="button" id="btn-export-csv" class="btn">유저·랭킹 CSV 다운로드</button>
+        <a href="/" class="btn" style="text-decoration:none;">게임 화면 열기</a>
+        <button type="button" id="btn-admin-logout" class="btn btn-wood">로그아웃</button>
+      </div>
+    </header>
+
+    <!-- 현황 요약 카드 -->
+    <section class="summary-grid">
+      <div class="stat-card">
+        <div class="stat-label">총 등록 유저 수</div>
+        <div class="stat-value" id="stat-total-users">0</div>
+        <div class="stat-sub">닉네임 등록 기준 전체 인원</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">점수 등록 참여자 수</div>
+        <div class="stat-value" id="stat-scored-users">0</div>
+        <div class="stat-sub">1점 이상 기록 보유 랭커</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">누적 총 플레이 판수</div>
+        <div class="stat-value" id="stat-total-plays">0</div>
+        <div class="stat-sub">로그인 상태 완료 판수 합계</div>
+      </div>
+    </section>
+
+    <!-- 배역별 엔딩 비율 -->
+    <section class="ratio-panel">
+      <div class="ratio-header">
+        <h2>배역별 엔딩 비율</h2>
+        <span>누적 플레이 엔딩 건수(비율) 및 최고기록 보유 인원</span>
+      </div>
+      <div class="ratio-grid" id="ending-ratio-grid"></div>
+    </section>
+
+    <!-- 유저 & 랭킹 테이블 / 매 판 플레이 로그 탭 -->
+    <section class="main-panel">
+      <div class="tabs-bar">
+        <div class="tab-btns">
+          <button type="button" class="tab-btn active" data-tab="users">
+            유저 &amp; 랭킹 조회 (<span id="count-users-tab">0</span>)
+          </button>
+          <button type="button" class="tab-btn" data-tab="logs">
+            매 판 플레이 기록 로그 (<span id="count-logs-tab">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <input
+          type="search"
+          id="input-search"
+          class="search-input"
+          placeholder="닉네임 검색..."
+        />
+        <select id="select-user-filter" class="select-box">
+          <option value="all">전체 등록 유저 (0점 포함)</option>
+          <option value="ranked">점수 보유 랭커만</option>
+          <option value="simon">엔딩: 사이먼</option>
+          <option value="goldmund">엔딩: 골드문트</option>
+          <option value="philos">엔딩: 필로스</option>
+          <option value="remy">엔딩: 레미</option>
+          <option value="basic">엔딩: P.K.H☆ (동점 히든)</option>
+          <option value="guinea">엔딩: 기니피그 (0점)</option>
+        </select>
+        <select id="select-user-sort" class="select-box">
+          <option value="rank">정렬: 랭킹(최고 점수)순</option>
+          <option value="plays">정렬: 플레이 횟수 많은순</option>
+          <option value="updated">정렬: 최근 기록 갱신순</option>
+          <option value="created">정렬: 최근 가입순</option>
+          <option value="nick">정렬: 닉네임 가나다순</option>
+        </select>
+      </div>
+
+      <!-- 탭 1: 유저 & 랭킹 통합 조회 -->
+      <div id="tab-users" class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>순위</th>
+              <th>닉네임</th>
+              <th>엔딩 배역</th>
+              <th>최고 점수</th>
+              <th>배역별 수집 개수 (최고기록 판)</th>
+              <th>버틴 시간</th>
+              <th>플레이 횟수</th>
+              <th>최고 기록 갱신 시각 (KST)</th>
+              <th>최초 등록 시각 (KST)</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-users"></tbody>
+        </table>
+      </div>
+
+      <!-- 탭 2: 매 판 플레이 기록 로그 -->
+      <div id="tab-logs" class="table-wrap" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th>로그 번호</th>
+              <th>플레이 시각 (KST)</th>
+              <th>닉네임</th>
+              <th>점수</th>
+              <th>엔딩 배역</th>
+              <th>배역별 수집 개수 (해당 판)</th>
+              <th>버틴 시간</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-logs"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 데이터 초기화 영역 -->
+    <section class="danger-zone">
+      <h2>시즌 / 이벤트 데이터 초기화</h2>
+      <p>
+        가오픈 테스트 종료 후 본 이벤트 시작 시 아래 버튼으로 데이터를 초기화할 수 있습니다.
+        실행한 초기화는 되돌릴 수 없으므로 신중히 진행해 주세요.
+      </p>
+      <div class="danger-actions">
+        <button type="button" id="btn-reset-scores" class="btn btn-wood">
+          점수 · 랭킹만 전체 초기화 (등록 닉네임/PIN 유지)
+        </button>
+        <button type="button" id="btn-reset-all" class="btn btn-primary">
+          유저 + 랭킹 완전 초기화 (전체 계정 삭제)
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 2중 확인 모달 -->
+  <div id="modal-confirm" class="modal-backdrop" hidden>
+    <div class="confirm-modal">
+      <h3 id="confirm-title">초기화 확인</h3>
+      <p id="confirm-desc"></p>
+      <input
+        type="text"
+        id="confirm-text-input"
+        class="confirm-input"
+        placeholder="'초기화' 입력"
+        autocomplete="off"
+      />
+      <p id="confirm-err" class="err-msg" hidden></p>
+      <div class="confirm-btns">
+        <button type="button" id="btn-confirm-cancel" class="btn">취소</button>
+        <button type="button" id="btn-confirm-run" class="btn btn-primary">실행</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const TOKEN_KEY = 'pkh_admin_session_v1';
+      const CHAR_META = {
+        simon: { name: '사이먼', img: 'assets/char_simon.webp' },
+        goldmund: { name: '골드문트', img: 'assets/char_goldmund.webp' },
+        philos: { name: '필로스', img: 'assets/char_philos.webp' },
+        remy: { name: '레미', img: 'assets/char_remy.webp' },
+        basic: { name: 'P.K.H☆ (히든)', img: 'assets/char_basic.webp' },
+        guinea: { name: '기니피그 (0점)', img: 'assets/char_guinea.webp' },
+      };
+
+      const state = {
+        token: sessionStorage.getItem(TOKEN_KEY) || '',
+        activeTab: 'users',
+        summary: null,
+        users: [],
+        logs: [],
+        pendingResetMode: null,
+      };
+
+      const loginView = document.getElementById('login-view');
+      const dashView = document.getElementById('dashboard-view');
+      const loginErr = document.getElementById('login-err');
+
+      function escapeHtml(str) {
+        return String(str ?? '').replace(/[&<>"']/g, (c) => {
+          const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+          return map[c];
+        });
+      }
+
+      function formatDuration(sec) {
+        const s = Math.max(0, Math.floor(Number(sec) || 0));
+        const mm = String(Math.floor(s / 60)).padStart(2, '0');
+        const ss = String(s % 60).padStart(2, '0');
+        return `${mm}:${ss}`;
+      }
+
+      function formatKST(sqlUtc) {
+        if (!sqlUtc) return '-';
+        const iso = sqlUtc.includes('T') ? sqlUtc : sqlUtc.replace(' ', 'T') + 'Z';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return sqlUtc;
+        return new Intl.DateTimeFormat('ko-KR', {
+          timeZone: 'Asia/Seoul',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }).format(d);
+      }
+
+      function renderRolePills(rc) {
+        const c = rc || {};
+        const s = Number(c.simon || 0);
+        const g = Number(c.goldmund || 0);
+        const p = Number(c.philos || 0);
+        const r = Number(c.remy || 0);
+        if (s + g + p + r === 0) {
+          return '<span style="color:#8b786d;font-size:12px;">기록 없음 (0)</span>';
+        }
+        return `
+          <div class="role-breakdown">
+            <span class="role-pill">사이먼<b>${s}</b></span>
+            <span class="role-pill">골드문트<b>${g}</b></span>
+            <span class="role-pill">필로스<b>${p}</b></span>
+            <span class="role-pill">레미<b>${r}</b></span>
+          </div>`;
+      }
+
+      function renderCharBadge(cid) {
+        const meta = CHAR_META[cid] || CHAR_META.guinea;
+        return `
+          <span class="char-cell">
+            <img src="${meta.img}" alt="${escapeHtml(meta.name)}" loading="lazy" />
+            <span>${escapeHtml(meta.name)}</span>
+          </span>`;
+      }
+
+      async function adminFetch(path, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        if (state.token) {
+          headers.Authorization = `Bearer ${state.token}`;
+        }
+        const res = await fetch(path, { ...options, headers });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401 && path !== '/api/admin/login') {
+          state.token = '';
+          sessionStorage.removeItem(TOKEN_KEY);
+          showView('login');
+        }
+        return { status: res.status, data };
+      }
+
+      function showView(mode) {
+        if (mode === 'dashboard') {
+          loginView.hidden = true;
+          dashView.hidden = false;
+        } else {
+          loginView.hidden = false;
+          dashView.hidden = true;
+        }
+      }
+
+      async function loadOverview() {
+        document.getElementById('last-updated-text').textContent = '불러오는 중...';
+        const { status, data } = await adminFetch('/api/admin/overview');
+        if (status !== 200 || !data.ok) return;
+
+        state.summary = data.summary;
+        state.users = data.users || [];
+        state.logs = data.logs || [];
+
+        const nowStr = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+        document.getElementById('last-updated-text').textContent = `마지막 조회: ${nowStr}`;
+
+        renderSummary();
+        renderTables();
+      }
+
+      function renderSummary() {
+        const s = state.summary;
+        if (!s) return;
+        document.getElementById('stat-total-users').textContent = s.totalUsers.toLocaleString();
+        document.getElementById('stat-scored-users').textContent = s.scoredUsers.toLocaleString();
+        document.getElementById('stat-total-plays').textContent = s.totalPlays.toLocaleString();
+
+        const order = ['simon', 'goldmund', 'philos', 'remy', 'basic', 'guinea'];
+        const totalPlays = Math.max(1, s.totalPlays);
+        const grid = document.getElementById('ending-ratio-grid');
+        grid.innerHTML = order
+          .map((cid) => {
+            const meta = CHAR_META[cid];
+            const playCnt = Number((s.playEndingCounts && s.playEndingCounts[cid]) || 0);
+            const pct = s.totalPlays > 0 ? ((playCnt / totalPlays) * 100).toFixed(1) : '0.0';
+            const bestCnt = Number((s.bestEndingCounts && s.bestEndingCounts[cid]) || 0);
+            return `
+              <div class="ratio-chip">
+                <img src="${meta.img}" alt="${escapeHtml(meta.name)}" />
+                <div class="ratio-meta">
+                  <strong>${escapeHtml(meta.name)}</strong>
+                  <small>플레이 ${playCnt.toLocaleString()}판 (${pct}%)</small>
+                  <small>최고기록 랭커 ${bestCnt.toLocaleString()}명</small>
+                </div>
+              </div>`;
+          })
+          .join('');
+      }
+
+      function getFilteredUsers() {
+        const q = document.getElementById('input-search').value.trim().toLowerCase();
+        const filterVal = document.getElementById('select-user-filter').value;
+        const sortVal = document.getElementById('select-user-sort').value;
+
+        let arr = state.users.filter((u) => {
+          if (q && !u.nickname.toLowerCase().includes(q)) return false;
+          if (filterVal === 'ranked') return u.bestScore > 0;
+          if (filterVal !== 'all') return u.bestCharacter === filterVal;
+          return true;
+        });
+
+        arr = [...arr];
+        if (sortVal === 'plays') {
+          arr.sort((a, b) => b.playCount - a.playCount || b.bestScore - a.bestScore);
+        } else if (sortVal === 'updated') {
+          arr.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+        } else if (sortVal === 'created') {
+          arr.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+        } else if (sortVal === 'nick') {
+          arr.sort((a, b) => a.nickname.localeCompare(b.nickname, 'ko'));
+        }
+        return arr;
+      }
+
+      function getFilteredLogs() {
+        const q = document.getElementById('input-search').value.trim().toLowerCase();
+        const filterVal = document.getElementById('select-user-filter').value;
+        return state.logs.filter((l) => {
+          if (q && !String(l.nickname).toLowerCase().includes(q)) return false;
+          if (filterVal === 'ranked') return l.score > 0;
+          if (filterVal !== 'all') return l.characterId === filterVal;
+          return true;
+        });
+      }
+
+      function renderTables() {
+        const filteredUsers = getFilteredUsers();
+        const filteredLogs = getFilteredLogs();
+
+        document.getElementById('count-users-tab').textContent = filteredUsers.length.toLocaleString();
+        document.getElementById('count-logs-tab').textContent = filteredLogs.length.toLocaleString();
+
+        const tbodyUsers = document.getElementById('tbody-users');
+        if (filteredUsers.length === 0) {
+          tbodyUsers.innerHTML = '<tr><td colspan="10" class="empty-row">조회된 유저가 없습니다.</td></tr>';
+        } else {
+          tbodyUsers.innerHTML = filteredUsers
+            .map(
+              (u) => `
+              <tr>
+                <td class="num-col">${u.rank ? `${u.rank}위` : '-'}</td>
+                <td><strong>${escapeHtml(u.nickname)}</strong></td>
+                <td>${renderCharBadge(u.bestCharacter)}</td>
+                <td class="num-col"><strong>${u.bestScore.toLocaleString()}점</strong></td>
+                <td>${renderRolePills(u.bestRoleCounts)}</td>
+                <td class="num-col">${formatDuration(u.bestSurvivalSec)}</td>
+                <td class="num-col">${u.playCount.toLocaleString()}회</td>
+                <td>${formatKST(u.updatedAt)}</td>
+                <td>${formatKST(u.createdAt)}</td>
+                <td>
+                  <button type="button" class="btn btn-danger-line" data-del-uid="${u.id}" data-del-nick="${escapeHtml(u.nickname)}">
+                    삭제
+                  </button>
+                </td>
+              </tr>`
+            )
+            .join('');
+        }
+
+        const tbodyLogs = document.getElementById('tbody-logs');
+        if (filteredLogs.length === 0) {
+          tbodyLogs.innerHTML = '<tr><td colspan="7" class="empty-row">플레이 기록 로그가 없습니다.</td></tr>';
+        } else {
+          tbodyLogs.innerHTML = filteredLogs
+            .map(
+              (l) => `
+              <tr>
+                <td class="num-col">#${l.id}</td>
+                <td>${formatKST(l.createdAt)}</td>
+                <td><strong>${escapeHtml(l.nickname)}</strong></td>
+                <td class="num-col"><strong>${l.score.toLocaleString()}점</strong></td>
+                <td>${renderCharBadge(l.characterId)}</td>
+                <td>${renderRolePills(l.roleCounts)}</td>
+                <td class="num-col">${formatDuration(l.survivalSec)}</td>
+              </tr>`
+            )
+            .join('');
+        }
+      }
+
+      function exportUsersCSV() {
+        const rows = getFilteredUsers();
+        const header = [
+          '순위',
+          '닉네임',
+          '엔딩배역',
+          '최고점수',
+          '사이먼수집',
+          '골드문트수집',
+          '필로스수집',
+          '레미수집',
+          '버틴시간(초)',
+          '플레이횟수',
+          '최고기록갱신시각(KST)',
+          '최초등록시각(KST)',
+        ];
+        const csvLines = [
+          header.join(','),
+          ...rows.map((u) => {
+            const rc = u.bestRoleCounts || {};
+            const meta = CHAR_META[u.bestCharacter] || CHAR_META.guinea;
+            const cols = [
+              u.rank || '',
+              `"${String(u.nickname).replace(/"/g, '""')}"`,
+              `"${meta.name}"`,
+              u.bestScore,
+              rc.simon || 0,
+              rc.goldmund || 0,
+              rc.philos || 0,
+              rc.remy || 0,
+              u.bestSurvivalSec,
+              u.playCount,
+              `"${formatKST(u.updatedAt)}"`,
+              `"${formatKST(u.createdAt)}"`,
+            ];
+            return cols.join(',');
+          }),
+        ];
+        const blob = new Blob(['\uFEFF' + csvLines.join('\r\n')], {
+          type: 'text/csv;charset=utf-8;',
+        });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const today = new Date().toISOString().slice(0, 10);
+        a.download = `pkh-maker3-rankings-${today}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      // 이벤트 바인딩
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginErr.hidden = true;
+        const pw = document.getElementById('admin-pw-input').value.trim();
+        const btn = document.getElementById('btn-login');
+        btn.disabled = true;
+        const { status, data } = await adminFetch('/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ password: pw }),
+        });
+        btn.disabled = false;
+        if (status !== 200 || !data.ok) {
+          loginErr.textContent = data.error || '비밀번호를 확인해 주세요.';
+          loginErr.hidden = false;
+          return;
+        }
+        state.token = data.token;
+        sessionStorage.setItem(TOKEN_KEY, data.token);
+        document.getElementById('admin-pw-input').value = '';
+        showView('dashboard');
+        loadOverview();
+      });
+
+      document.getElementById('btn-admin-logout').addEventListener('click', () => {
+        state.token = '';
+        sessionStorage.removeItem(TOKEN_KEY);
+        showView('login');
+      });
+
+      document.getElementById('btn-reload').addEventListener('click', loadOverview);
+      document.getElementById('btn-export-csv').addEventListener('click', exportUsersCSV);
+
+      document.querySelectorAll('[data-tab]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.activeTab = btn.getAttribute('data-tab');
+          document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('active', b === btn));
+          document.getElementById('tab-users').hidden = state.activeTab !== 'users';
+          document.getElementById('tab-logs').hidden = state.activeTab !== 'logs';
+          document.getElementById('select-user-sort').hidden = state.activeTab !== 'users';
+        });
+      });
+
+      document.getElementById('input-search').addEventListener('input', renderTables);
+      document.getElementById('select-user-filter').addEventListener('change', renderTables);
+      document.getElementById('select-user-sort').addEventListener('change', renderTables);
+
+      // 개별 유저 삭제
+      document.getElementById('tbody-users').addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-del-uid]');
+        if (!btn) return;
+        const uid = btn.getAttribute('data-del-uid');
+        const nick = btn.getAttribute('data-del-nick');
+        if (!window.confirm(`[${nick}] 유저와 해당 플레이 기록을 삭제할까요?\n삭제 후에는 복구할 수 없습니다.`)) {
+          return;
+        }
+        btn.disabled = true;
+        const { status, data } = await adminFetch(`/api/admin/users/${uid}`, { method: 'DELETE' });
+        if (status === 200 && data.ok) {
+          await loadOverview();
+        } else {
+          alert(data.error || '삭제에 실패했습니다.');
+          btn.disabled = false;
+        }
+      });
+
+      // 전체 초기화 2중 확인 모달
+      const modalConfirm = document.getElementById('modal-confirm');
+      const confirmTitle = document.getElementById('confirm-title');
+      const confirmDesc = document.getElementById('confirm-desc');
+      const confirmInput = document.getElementById('confirm-text-input');
+      const confirmErr = document.getElementById('confirm-err');
+
+      function openResetModal(mode) {
+        state.pendingResetMode = mode;
+        confirmErr.hidden = true;
+        confirmInput.value = '';
+        if (mode === 'scores') {
+          confirmTitle.textContent = '점수 · 랭킹만 전체 초기화';
+          confirmDesc.textContent =
+            '등록된 유저들의 닉네임과 PIN은 유지하고, 모든 최고 점수와 플레이 로그를 0으로 비웁니다. 실행하려면 아래에 "초기화"를 입력해 주세요.';
+        } else {
+          confirmTitle.textContent = '유저 + 랭킹 완전 초기화';
+          confirmDesc.textContent =
+            '등록된 모든 유저 계정(닉네임/PIN)과 점수·플레이 로그를 완전히 삭제합니다. 실행하려면 아래에 "초기화"를 입력해 주세요.';
+        }
+        modalConfirm.hidden = false;
+        setTimeout(() => confirmInput.focus(), 40);
+      }
+
+      document.getElementById('btn-reset-scores').addEventListener('click', () => openResetModal('scores'));
+      document.getElementById('btn-reset-all').addEventListener('click', () => openResetModal('all'));
+      document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
+        modalConfirm.hidden = true;
+      });
+
+      document.getElementById('btn-confirm-run').addEventListener('click', async () => {
+        const text = confirmInput.value.trim();
+        if (text !== '초기화') {
+          confirmErr.textContent = '정확히 "초기화" 세 글자를 입력해 주세요.';
+          confirmErr.hidden = false;
+          return;
+        }
+        const endpoint =
+          state.pendingResetMode === 'scores' ? '/api/admin/reset-scores' : '/api/admin/reset-all';
+        const runBtn = document.getElementById('btn-confirm-run');
+        runBtn.disabled = true;
+        const { status, data } = await adminFetch(endpoint, {
+          method: 'POST',
+          body: JSON.stringify({ confirmText: text }),
+        });
+        runBtn.disabled = false;
+        if (status === 200 && data.ok) {
+          modalConfirm.hidden = true;
+          await loadOverview();
+          alert('초기화가 완료되었습니다.');
+        } else {
+          confirmErr.textContent = data.error || '초기화에 실패했습니다.';
+          confirmErr.hidden = false;
+        }
+      });
+
+      if (state.token) {
+        showView('dashboard');
+        loadOverview();
+      } else {
+        showView('login');
+      }
+    })();
+  </script>
+</body>
+</html>

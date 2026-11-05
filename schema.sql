@@ -6,8 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
   pin_salt TEXT NOT NULL,
   pin_hash TEXT NOT NULL,
   best_score INTEGER NOT NULL DEFAULT 0,
-  best_character TEXT NOT NULL DEFAULT 'basic',
+  best_character TEXT NOT NULL DEFAULT 'guinea',
   best_survival_sec INTEGER NOT NULL DEFAULT 0,
+  best_role_counts TEXT NOT NULL DEFAULT '{}',
   play_count INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS score_logs (
   score INTEGER NOT NULL,
   character_id TEXT NOT NULL,
   survival_sec INTEGER NOT NULL DEFAULT 0,
+  role_counts TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );

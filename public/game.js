@@ -21,6 +21,9 @@
     });
   }
 
+  const hiddenRole = CFG.hiddenRole || CFG.fallbackRole;
+  const zeroRole = CFG.zeroRole || hiddenRole;
+
   async function preloadAssetsStaged() {
     // 1단계: 첫 화면 & 즉시 플레이 핵심 에셋 우선 로드
     const critical = [loadImage('player_basic', CFG.player.image)];
@@ -33,7 +36,8 @@
     const secondary = [
       loadImage('life_guinea', CFG.lives.icon),
       loadImage('bomb_silver', CFG.bomb.image),
-      loadImage(`role_char_${CFG.fallbackRole.id}`, CFG.fallbackRole.characterImage),
+      loadImage(`role_char_${hiddenRole.id}`, hiddenRole.characterImage),
+      loadImage(`role_char_${zeroRole.id}`, zeroRole.characterImage),
     ];
     CFG.roles.forEach((role) => {
       secondary.push(loadImage(`role_char_${role.id}`, role.characterImage));
@@ -58,7 +62,8 @@
       });
     });
   });
-  ROLE_MAP[CFG.fallbackRole.id] = CFG.fallbackRole;
+  ROLE_MAP[hiddenRole.id] = hiddenRole;
+  ROLE_MAP[zeroRole.id] = zeroRole;
 
   // =========================================================================
   // 2. 사운드 합성기
@@ -535,6 +540,14 @@
   function applyBrandConfig() {
     document.title = CFG.brand.title;
     document.getElementById('start-subtitle').innerHTML = CFG.brand.subtitle.replace(/\n/g, '<br />');
+    const simpleRulesEl = document.getElementById('start-simple-rules');
+    if (simpleRulesEl && CFG.brand.simpleRules) {
+      simpleRulesEl.textContent = CFG.brand.simpleRules;
+    }
+    const guideIntroEl = document.getElementById('guide-intro-text');
+    if (guideIntroEl && CFG.brand.guideIntro) {
+      guideIntroEl.innerHTML = CFG.brand.guideIntro.replace(/\n/g, '<br />');
+    }
     setImgIfChanged(document.getElementById('start-hero-img'), CFG.player.image);
 
     // 로고 영역 (추후 로고 이미지 등록 시 점선 박스 대신 로고 이미지 노출)
@@ -713,7 +726,12 @@
 
     if (!authState.user) {
       authState.pendingResult = payload;
-      rankMsgEl.textContent = '닉네임을 등록하면 랭킹에 점수를 남길 수 있어요.';
+      rankMsgEl.textContent =
+        payload.score > 0
+          ? '닉네임을 등록하면 랭킹에 점수를 남길 수 있어요.'
+          : '닉네임을 등록해 두면 다음 도전 점수가 바로 기록됩니다.';
+      regBtnEl.textContent =
+        payload.score > 0 ? '닉네임 입력하고 이 점수 기록하기' : '닉네임 등록해 두기';
       regBtnEl.hidden = false;
       return;
     }
@@ -823,6 +841,7 @@
         .map((r) => {
           const rankClass = r.rank === 1 ? 'rank-1' : '';
           const meClass = r.isMe ? 'is-me' : '';
+          const roleObj = ROLE_MAP[r.bestCharacter] || hiddenRole;
           return `
           <li class="rank-row ${rankClass} ${meClass}">
             <span class="rank-no">${r.rank}</span>
@@ -831,6 +850,9 @@
                 <span class="rank-nick">${escapeHtml(r.nickname)}</span>
                 ${r.isMe ? '<span class="my-tag">나</span>' : ''}
               </div>
+            </div>
+            <div class="rank-char-badge" style="--role-tint:${roleObj.bgTint || '#ebe2d5'}" title="${escapeHtml(roleObj.name)}">
+              <img src="${roleObj.characterImage}" alt="${escapeHtml(roleObj.name)}" class="rank-char-icon" loading="lazy" decoding="async" draggable="false" />
             </div>
             <span class="rank-pt">${Number(r.bestScore).toLocaleString()}점</span>
           </li>`;
@@ -960,25 +982,22 @@
       if (c > maxCount) maxCount = c;
     });
 
-    if (maxCount === 0) {
-      return CFG.fallbackRole;
+    // 6) 0점(징표 0개 획득 후 종료) -> 기니피그 엔딩 ('인간이 되고 싶었어...')
+    if (maxCount === 0 || gameState.score <= 0) {
+      return zeroRole;
     }
 
     const tiedIds = CFG.roles
       .map((r) => r.id)
       .filter((id) => (gameState.roleCounts[id] || 0) === maxCount);
 
+    // 1)~4) 단독 1위 배역 엔딩
     if (tiedIds.length === 1) {
       return ROLE_MAP[tiedIds[0]];
     }
 
-    // 최고 개수가 동률이면 동률 배역 중 가장 마지막(최근)에 먹은 소품의 배역으로 결정
-    for (let i = gameState.lastRoleOrder.length - 1; i >= 0; i--) {
-      if (tiedIds.includes(gameState.lastRoleOrder[i])) {
-        return ROLE_MAP[gameState.lastRoleOrder[i]];
-      }
-    }
-    return ROLE_MAP[tiedIds[0]];
+    // 5) 1위 배역이 2개 이상 동률일 때 -> 히든 엔딩 P.K.H☆ (기본.png)
+    return hiddenRole;
   }
 
   function triggerGameOver() {
@@ -1028,6 +1047,7 @@
         survivalSec: finalSec,
         characterId: winnerRole.id,
         caughtCount: gameState.caughtTotal,
+        roleCounts: { ...gameState.roleCounts },
       });
     }, 420);
   }
@@ -1107,7 +1127,6 @@
           if (p.invincibleTimer <= 0) {
             gameState.items.splice(i, 1);
             gameState.lives = Math.max(0, gameState.lives - 1);
-            gameState.combo = 0;
             p.invincibleTimer = CFG.player.invincibleMs / 1000;
             p.scaleX = 0.85;
             p.scaleY = 1.15;
@@ -1137,25 +1156,43 @@
           gameState.lastRoleOrder.push(it.roleId);
           if (gameState.lastRoleOrder.length > 30) gameState.lastRoleOrder.shift();
 
-          const comboBonus = Math.min(
-            CFG.scoring.maxComboBonus,
-            (gameState.combo - 1) * CFG.scoring.comboStepScore
-          );
-          const gained = CFG.scoring.baseItemScore + comboBonus;
+          const comboBonus =
+            gameState.combo >= 2
+              ? Math.min(
+                  CFG.scoring.maxComboBonus,
+                  (gameState.combo - 1) * CFG.scoring.comboStepScore
+                )
+              : 0;
+          const isBlackout = gameState.climaxActive || gameState.climaxBlend > 0.45;
+          const blackoutBonus = isBlackout ? CFG.scoring.blackoutBonusScore || 0 : 0;
+          const gained = CFG.scoring.baseItemScore + comboBonus + blackoutBonus;
           gameState.score += gained;
 
           p.scaleX = 1.12;
           p.scaleY = 0.89;
 
           sound.playCatch(gameState.combo);
-          emitParticles(it.x, it.y, it.themeColor, 6);
-          addFloatingText(p.x, CFG.player.y - 64, `+${gained}`, '#382c28');
+          emitParticles(it.x, it.y, isBlackout ? '#dfbe6f' : it.themeColor, 7);
+
+          let floatLabel = `+${gained}`;
+          let floatColor = '#261b18';
+          if (isBlackout && gameState.combo >= 2) {
+            floatLabel = `${gameState.combo}연속·암전 +${gained}`;
+            floatColor = '#dfbe6f';
+          } else if (isBlackout) {
+            floatLabel = `암전 +${gained}`;
+            floatColor = '#dfbe6f';
+          } else if (gameState.combo >= 2) {
+            floatLabel = `${gameState.combo}연속 +${gained}`;
+            floatColor = '#9c4538';
+          }
+          addFloatingText(p.x, CFG.player.y - 66, floatLabel, floatColor);
           continue;
         }
       }
 
-      if (it.y > H - 56) {
-        // 일반 소품을 바닥에 놓치면 콤보 초기화
+      // 바닥 기준(y > 728): 징표를 하나라도 바닥에 흘리면 콤보 초기화
+      if (it.y > 728) {
         if (!it.isBomb) {
           gameState.combo = 0;
         }
@@ -1212,7 +1249,8 @@
       ctx.drawImage(bgImg, 0, 56, W, H - 56);
 
       if (b > 0.01) {
-        ctx.fillStyle = `rgba(26, 20, 38, ${0.52 * b})`;
+        // 암전 연출: 공연장 조명이 꺼지며 어두워짐
+        ctx.fillStyle = `rgba(14, 10, 20, ${0.74 * b})`;
         ctx.fillRect(0, 56, W, H - 56);
       }
     } else if (CFG.brand.stageBackground) {
@@ -1280,48 +1318,72 @@
   function drawBottomRoleTally() {
     if (gameState.phase === 'title') return;
 
-    // 하단 무대 바닥: 실시간 배역별 획득 개수 카운터 바 (앤틱 명패 프레임)
+    // 상단 상태 띠 (암전 보너스 구간 또는 무낙하 연속 콤보 표시)
+    if (gameState.phase === 'playing') {
+      const isBlackout = gameState.climaxActive || gameState.climaxBlend > 0.45;
+      const tags = [];
+      if (isBlackout) tags.push(`암전 보너스 +${CFG.scoring.blackoutBonusScore || 50}`);
+      if (gameState.combo >= 2) tags.push(`${gameState.combo}연속 콤보`);
+      if (tags.length > 0) {
+        ctx.save();
+        const badgeText = tags.join(' · ');
+        ctx.font = '700 11px "Galmuri11Bold", "DOSMyungjo", monospace';
+        const tw = Math.ceil(ctx.measureText(badgeText).width) + 20;
+        const bx = Math.round((W - tw) / 2);
+        const by = 64;
+        ctx.fillStyle = isBlackout ? 'rgba(30, 20, 28, 0.9)' : 'rgba(245, 237, 225, 0.92)';
+        ctx.fillRect(bx, by, tw, 22);
+        ctx.strokeStyle = isBlackout ? '#dfbe6f' : '#261b18';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx, by, tw, 22);
+        ctx.fillStyle = isBlackout ? '#f8e3a3' : '#261b18';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(badgeText, W / 2, by + 11.5);
+        ctx.restore();
+      }
+    }
+
+    // 하단 무대 바닥: 실시간 배역별 획득 개수 카운터 바 (픽셀 명패 프레임)
     ctx.save();
     const barY = 738;
     const chipW = 98;
     const chipH = 42;
     const gap = 8;
-    const startX = (W - (chipW * 4 + gap * 3)) / 2;
+    const startX = Math.round((W - (chipW * 4 + gap * 3)) / 2);
 
     CFG.roles.forEach((role, idx) => {
       const cx = startX + idx * (chipW + gap);
       const cnt = gameState.roleCounts[role.id] || 0;
 
-      // 좌하단 그림자
-      ctx.fillStyle = 'rgba(20, 12, 10, 0.42)';
-      roundRectPath(ctx, cx - 2.5, barY + 2.5, chipW, chipH, 2.5);
-      ctx.fill();
+      // 좌하단 도트 그림자
+      ctx.fillStyle = 'rgba(20, 12, 10, 0.46)';
+      ctx.fillRect(cx - 3, barY + 3, chipW, chipH);
 
-      // 양피지 배경 & 외곽 테두리
-      ctx.fillStyle = cnt > 0 ? 'rgba(247, 240, 229, 0.96)' : 'rgba(236, 226, 212, 0.84)';
+      // 양피지 배경 & 직각 도트 외곽 테두리
+      ctx.fillStyle = cnt > 0 ? 'rgba(247, 240, 229, 0.97)' : 'rgba(236, 226, 212, 0.86)';
+      ctx.fillRect(cx, barY, chipW, chipH);
       ctx.strokeStyle = '#261b18';
-      ctx.lineWidth = 1.8;
-      roundRectPath(ctx, cx, barY, chipW, chipH, 2.5);
-      ctx.fill();
-      ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx, barY, chipW, chipH);
 
       // 안쪽 앤틱 이중 실선
-      ctx.strokeStyle = cnt > 0 ? '#c4b199' : 'rgba(180, 162, 142, 0.7)';
+      ctx.strokeStyle = cnt > 0 ? '#bda78e' : 'rgba(180, 162, 142, 0.72)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(cx + 2.5, barY + 2.5, chipW - 5, chipH - 5);
+      ctx.strokeRect(cx + 3, barY + 3, chipW - 6, chipH - 6);
 
       const iconImg = IMAGES[`item_${role.items[0].id}`];
       if (iconImg) {
         ctx.drawImage(iconImg, cx + 6, barY + 7, 28, 28);
       }
       ctx.fillStyle = '#5c4942';
-      ctx.font = '700 11px "Pretendard Variable", Pretendard, sans-serif';
+      ctx.font = '400 11px "DOSMyungjo", serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(role.name, cx + 38, barY + 15);
 
       ctx.fillStyle = '#261b18';
-      ctx.font = '900 14px "Pretendard Variable", Pretendard, sans-serif';
+      ctx.font = '700 13px "Galmuri11Bold", "DOSMyungjo", monospace';
       ctx.fillText(`${cnt}`, cx + 38, barY + 30);
     });
     ctx.restore();
@@ -1370,28 +1432,32 @@
     }
     ctx.restore();
 
-    // 파티클
+    // 픽셀 사각 파티클
     gameState.particles.forEach((pt) => {
       ctx.save();
       ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+      const pxSize = Math.max(3, Math.round(pt.size * 1.5));
+      const rx = Math.round(pt.x - pxSize / 2);
+      const ry = Math.round(pt.y - pxSize / 2);
+      ctx.fillStyle = '#261b18';
+      ctx.fillRect(rx - 1, ry - 1, pxSize + 2, pxSize + 2);
       ctx.fillStyle = pt.color;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(rx, ry, pxSize, pxSize);
       ctx.restore();
     });
 
-    // 획득 점수 플로팅
+    // 획득 점수 플로팅 (픽셀 폰트)
     gameState.floatingTexts.forEach((ft) => {
       ctx.save();
       ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
-      ctx.font = '800 14px "Pretendard Variable", Pretendard, sans-serif';
+      ctx.font = '700 12.5px "Galmuri11Bold", "DOSMyungjo", monospace';
       ctx.textAlign = 'center';
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#f5ede1';
-      ctx.strokeText(ft.text, ft.x, ft.y);
+      ctx.lineWidth = 3.5;
+      const darkOutline = ft.color === '#dfbe6f' || gameState.climaxBlend > 0.45;
+      ctx.strokeStyle = darkOutline ? '#261b18' : '#f5ede1';
+      ctx.strokeText(ft.text, Math.round(ft.x), Math.round(ft.y));
       ctx.fillStyle = ft.color;
-      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.fillText(ft.text, Math.round(ft.x), Math.round(ft.y));
       ctx.restore();
     });
 
