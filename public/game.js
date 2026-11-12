@@ -776,7 +776,8 @@
         updateAccountUI();
       }
       const sorted = getLocalRankingsSorted();
-      const myRank = sorted.findIndex((r) => r.isMe) + 1;
+      const meRow = sorted.find((r) => r.isMe);
+      const myRank = meRow ? meRow.rank : null;
       rankMsgEl.textContent = `${authState.user.nickname} · ${myRank ? `${myRank}위` : '-'} (최고 ${authState.user.bestScore.toLocaleString()}점)`;
     }
   }
@@ -785,16 +786,24 @@
     const list = getLocalStore()
       .filter((u) => u.bestScore > 0)
       .sort((a, b) => b.bestScore - a.bestScore || a.updatedAt - b.updatedAt);
-    return list.map((u, i) => ({
-      rank: i + 1,
-      nickname: u.nickname,
-      bestScore: u.bestScore,
-      bestCharacter: u.bestCharacter || 'basic',
-      bestSurvivalSec: u.bestSurvivalSec || 0,
-      isMe: authState.user
-        ? u.nickname.toLowerCase() === authState.user.nickname.toLowerCase()
-        : false,
-    }));
+    let prevScore = null;
+    let currentRank = 0;
+    return list.map((u, i) => {
+      if (u.bestScore !== prevScore) {
+        currentRank = i + 1;
+        prevScore = u.bestScore;
+      }
+      return {
+        rank: currentRank,
+        nickname: u.nickname,
+        bestScore: u.bestScore,
+        bestCharacter: u.bestCharacter || 'basic',
+        bestSurvivalSec: u.bestSurvivalSec || 0,
+        isMe: authState.user
+          ? u.nickname.toLowerCase() === authState.user.nickname.toLowerCase()
+          : false,
+      };
+    });
   }
 
   async function fetchAndRenderRankingBoard() {
@@ -809,8 +818,8 @@
       }
     } catch {
       const localRanks = getLocalRankingsSorted();
-      const myIdx = localRanks.findIndex((r) => r.isMe);
-      renderRankingListDOM(localRanks, localRanks.length, myIdx >= 0 ? myIdx + 1 : null);
+      const meRow = localRanks.find((r) => r.isMe);
+      renderRankingListDOM(localRanks, localRanks.length, meRow ? meRow.rank : null);
     }
   }
 

@@ -249,10 +249,9 @@ async function getUserRank(db, user) {
     .prepare(
       `SELECT COUNT(*) + 1 AS rank
        FROM users
-       WHERE best_score > ?
-          OR (best_score = ? AND updated_at < ?)`
+       WHERE best_score > ?`
     )
-    .bind(user.best_score, user.best_score, user.updated_at)
+    .bind(user.best_score)
     .first();
   return row ? Number(row.rank) : null;
 }
@@ -263,22 +262,32 @@ async function getRankingsPayload(db, currentUser = null) {
       `SELECT id, nickname, best_score, best_character, best_survival_sec, updated_at
        FROM users
        WHERE best_score > 0
-       ORDER BY best_score DESC, updated_at ASC`
+       ORDER BY best_score DESC, updated_at ASC, id ASC`
     )
     .all();
 
-  const rankings = (results || []).map((r, idx) => ({
-    rank: idx + 1,
-    nickname: r.nickname,
-    bestScore: Number(r.best_score),
-    bestCharacter: r.best_character || 'basic',
-    bestSurvivalSec: Number(r.best_survival_sec || 0),
-    isMe: currentUser ? r.id === currentUser.id : false,
-  }));
+  let prevScore = null;
+  let currentRank = 0;
+  const rankings = (results || []).map((r, idx) => {
+    const score = Number(r.best_score);
+    if (score !== prevScore) {
+      currentRank = idx + 1;
+      prevScore = score;
+    }
+    return {
+      rank: currentRank,
+      nickname: r.nickname,
+      bestScore: score,
+      bestCharacter: r.best_character || 'basic',
+      bestSurvivalSec: Number(r.best_survival_sec || 0),
+      isMe: currentUser ? r.id === currentUser.id : false,
+    };
+  });
 
   let myRank = null;
   if (currentUser && currentUser.best_score > 0) {
-    myRank = await getUserRank(db, currentUser);
+    const meRow = rankings.find((r) => r.isMe);
+    myRank = meRow ? meRow.rank : await getUserRank(db, currentUser);
   }
 
   return {
@@ -379,7 +388,8 @@ export default {
              GROUP BY character_id`
           ).all();
 
-          let rankSeq = 0;
+          let currentRank = 0;
+          let prevScore = null;
           let scoredUsers = 0;
           const bestEndingCounts = {
             simon: 0,
@@ -394,14 +404,17 @@ export default {
             const bestScore = Number(u.best_score || 0);
             const hasScore = bestScore > 0;
             if (hasScore) {
-              rankSeq += 1;
               scoredUsers += 1;
+              if (bestScore !== prevScore) {
+                currentRank = scoredUsers;
+                prevScore = bestScore;
+              }
               const cid = VALID_CHARACTERS.has(u.best_character) ? u.best_character : 'basic';
               bestEndingCounts[cid] = (bestEndingCounts[cid] || 0) + 1;
             }
             return {
               id: Number(u.id),
-              rank: hasScore ? rankSeq : null,
+              rank: hasScore ? currentRank : null,
               nickname: u.nickname,
               bestScore,
               bestCharacter: u.best_character || 'guinea',
