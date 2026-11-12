@@ -22,6 +22,8 @@ window.PKH_CONFIG = {
   },
   player: {
     image: 'assets/char_guinea.webp',
+    hurtImage1: 'assets/char_guinea_hurt1.webp',
+    hurtImage2: 'assets/char_guinea_hurt2.webp',
     size: 112,
     y: 668,
     minX: 58,
@@ -123,7 +125,7 @@ window.PKH_CONFIG = {
     name: '기니피그',
     themeColor: '#7a583b',
     bgTint: '#efe4d4',
-    characterImage: 'assets/char_guinea.webp',
+    characterImage: 'assets/char_guinea_zero.webp',
     resultTitle: '인간이 되고 싶었어...',
     resultComment: '꾸...이... 꾸...이꾸이... (재..도전... 재도전...)',
   },

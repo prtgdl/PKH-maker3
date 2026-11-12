@@ -39,6 +39,8 @@
       loadImage(`role_char_${hiddenRole.id}`, hiddenRole.characterImage),
       loadImage(`role_char_${zeroRole.id}`, zeroRole.characterImage),
     ];
+    if (CFG.player.hurtImage1) secondary.push(loadImage('player_hurt1', CFG.player.hurtImage1));
+    if (CFG.player.hurtImage2) secondary.push(loadImage('player_hurt2', CFG.player.hurtImage2));
     CFG.roles.forEach((role) => {
       secondary.push(loadImage(`role_char_${role.id}`, role.characterImage));
       role.items.forEach((it) => {
@@ -1365,9 +1367,17 @@
       ctx.restore();
     });
 
-    // 플레이어 기본 캐릭터
+    // 플레이어 기본 캐릭터 (피격 무적 시간 동안 잃은 목숨 수에 따라 찡그린 표정 1·2 표시)
     const p = gameState.player;
-    const charImg = IMAGES.player_basic;
+    const lostLives = CFG.lives.max - gameState.lives;
+    let charImg = IMAGES.player_basic;
+    if (p.invincibleTimer > 0) {
+      if (lostLives === 1 && IMAGES.player_hurt1) {
+        charImg = IMAGES.player_hurt1;
+      } else if (lostLives >= 2 && IMAGES.player_hurt2) {
+        charImg = IMAGES.player_hurt2;
+      }
+    }
     const size = CFG.player.size;
 
     // 발밑 그림자
