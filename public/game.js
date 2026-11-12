@@ -1244,7 +1244,7 @@
     const bgImg = IMAGES.bg_stage;
 
     if (bgImg) {
-      ctx.fillStyle = '#e8dccb';
+      ctx.fillStyle = '#f3d8da';
       ctx.fillRect(0, 0, W, 58);
       ctx.drawImage(bgImg, 0, 56, W, H - 56);
 
@@ -1331,18 +1331,18 @@
       const cnt = gameState.roleCounts[role.id] || 0;
 
       // 좌하단 도트 그림자
-      ctx.fillStyle = 'rgba(20, 12, 10, 0.46)';
+      ctx.fillStyle = 'rgba(28, 12, 16, 0.46)';
       ctx.fillRect(cx - 3, barY + 3, chipW, chipH);
 
-      // 양피지 배경 & 직각 도트 외곽 테두리
-      ctx.fillStyle = cnt > 0 ? 'rgba(247, 240, 229, 0.97)' : 'rgba(236, 226, 212, 0.86)';
+      // 로즈 핑크 배경 & 직각 도트 외곽 테두리
+      ctx.fillStyle = cnt > 0 ? 'rgba(254, 243, 245, 0.97)' : 'rgba(244, 224, 228, 0.9)';
       ctx.fillRect(cx, barY, chipW, chipH);
-      ctx.strokeStyle = '#261b18';
+      ctx.strokeStyle = '#2b1a1d';
       ctx.lineWidth = 2;
       ctx.strokeRect(cx, barY, chipW, chipH);
 
-      // 안쪽 앤틱 이중 실선
-      ctx.strokeStyle = cnt > 0 ? '#bda78e' : 'rgba(180, 162, 142, 0.72)';
+      // 안쪽 앤틱 로즈 이중 실선
+      ctx.strokeStyle = cnt > 0 ? '#d89fa8' : 'rgba(206, 158, 165, 0.78)';
       ctx.lineWidth = 1;
       ctx.strokeRect(cx + 3, barY + 3, chipW - 6, chipH - 6);
 
@@ -1350,13 +1350,13 @@
       if (iconImg) {
         ctx.drawImage(iconImg, cx + 6, barY + 7, 28, 28);
       }
-      ctx.fillStyle = '#5c4942';
+      ctx.fillStyle = '#6e484f';
       ctx.font = '400 11px "DOSMyungjo", serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(role.name, cx + 38, barY + 15);
 
-      ctx.fillStyle = '#261b18';
+      ctx.fillStyle = '#2b1a1d';
       ctx.font = '700 13px "Galmuri11Bold", "DOSMyungjo", monospace';
       ctx.fillText(`${cnt}`, cx + 38, barY + 30);
     });
