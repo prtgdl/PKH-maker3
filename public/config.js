@@ -1,6 +1,5 @@
 /**
  * PKH-maker3 설정 파일
- * 칼(실버) 이미지 수령 시 public/assets/bomb_silver.png 파일만 교체하시면 됩니다.
  */
 window.PKH_CONFIG = {
   // 1. 타이틀 & 로고 설정
@@ -36,13 +35,13 @@ window.PKH_CONFIG = {
     icon: 'assets/life_guinea.webp',
   },
 
-  // 3. 피해야 할 소품 — 실버 (현재 임시 이미지: 장미 -> 추후 칼 이미지로 파일 교체)
+  // 3. 피해야 할 소품 — 실버
   bomb: {
     id: 'silver',
     name: '실버',
     guideDesc:
       '위험한 소품입니다! 닿을 때마다 남은 기회가 하나씩 줄어듭니다. 세 번의 실수로 P.K.H☆ 여정이 끝날 수 있으니 조심하세요!',
-    image: 'assets/bomb_silver.png',
+    image: 'assets/bomb_silver.webp',
     size: 54,
     hitboxScale: 0.56,
   },
