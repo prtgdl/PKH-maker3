@@ -403,6 +403,65 @@ function formatUserProfile(user, myRank = null) {
   };
 }
 
+function parseKstDatetimeInput(raw) {
+  const s = String(raw || '').trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::\d{2})?$/);
+  if (!m) return null;
+  const kst = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}`;
+  const display = `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`;
+  const ms = Date.parse(`${kst}:00+09:00`);
+  if (!Number.isFinite(ms)) return null;
+  return { kst, display, ms };
+}
+
+async function getFreezeStatus(db) {
+  const empty = {
+    hasSchedule: false,
+    active: false,
+    status: 'none',
+    startAt: 0,
+    endAt: 0,
+    startKst: '',
+    endKst: '',
+    startDisplay: '',
+    endDisplay: '',
+    message: '',
+  };
+  try {
+    const row = await db
+      .prepare(`SELECT value FROM app_meta WHERE key = 'ranking_freeze'`)
+      .first();
+    if (!row || !row.value) return empty;
+    const parsed = JSON.parse(row.value);
+    const startAt = Number(parsed.startAt || 0);
+    const endAt = Number(parsed.endAt || 0);
+    const startKst = String(parsed.startKst || '');
+    const endKst = String(parsed.endKst || '');
+    const startDisplay = String(parsed.startDisplay || startKst.replace('T', ' '));
+    const endDisplay = String(parsed.endDisplay || endKst.replace('T', ' '));
+    if (!startAt || !endAt || endAt <= startAt || !endDisplay) return empty;
+
+    const now = Date.now();
+    const active = now >= startAt && now < endAt;
+    const status = now < startAt ? 'scheduled' : active ? 'active' : 'expired';
+    const message = `현재 랭킹 집계 시간입니다. ${endDisplay} 이후에 다시 플레이할 수 있습니다.`;
+    return {
+      hasSchedule: true,
+      active,
+      status,
+      startAt,
+      endAt,
+      startKst,
+      endKst,
+      startDisplay,
+      endDisplay,
+      message,
+    };
+  } catch {
+    return empty;
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -556,8 +615,11 @@ export default {
             createdAt: l.created_at,
           }));
 
+          const freeze = await getFreezeStatus(env.DB);
+
           return jsonResponse({
             ok: true,
+            freeze,
             summary: {
               totalUsers: users.length,
               scoredUsers,
@@ -568,6 +630,49 @@ export default {
             users,
             logs,
           });
+        }
+
+        // 1-2) POST /api/admin/freeze — 랭킹 동결 시작/중단 일시 설정 또는 즉시 해제
+        if (url.pathname === '/api/admin/freeze' && request.method === 'POST') {
+          const body = await request.json().catch(() => ({}));
+          if (body.action === 'clear') {
+            await env.DB.prepare(`DELETE FROM app_meta WHERE key = 'ranking_freeze'`).run();
+            const freeze = await getFreezeStatus(env.DB);
+            return jsonResponse({ ok: true, freeze });
+          }
+
+          const startParsed = parseKstDatetimeInput(body.startKst);
+          const endParsed = parseKstDatetimeInput(body.endKst);
+          if (!startParsed || !endParsed) {
+            return jsonResponse(
+              { ok: false, error: '동결 시작 일시와 중단 일시를 모두 정확히 입력해 주세요.' },
+              400
+            );
+          }
+          if (endParsed.ms <= startParsed.ms) {
+            return jsonResponse(
+              { ok: false, error: '동결 중단 일시는 시작 일시보다 이후여야 합니다.' },
+              400
+            );
+          }
+
+          const payload = JSON.stringify({
+            startAt: startParsed.ms,
+            endAt: endParsed.ms,
+            startKst: startParsed.kst,
+            endKst: endParsed.kst,
+            startDisplay: startParsed.display,
+            endDisplay: endParsed.display,
+          });
+
+          await env.DB.prepare(
+            `INSERT OR REPLACE INTO app_meta (key, value) VALUES ('ranking_freeze', ?)`
+          )
+            .bind(payload)
+            .run();
+
+          const freeze = await getFreezeStatus(env.DB);
+          return jsonResponse({ ok: true, freeze });
         }
 
         // 2) DELETE /api/admin/users/:id — 특정 유저 개별 삭제
@@ -627,8 +732,27 @@ export default {
       // 일반 게임 API (/api/*)
       // =======================================================================
 
+      // 0) GET /api/status — 랭킹 동결(집계) 상태 확인
+      if (url.pathname === '/api/status' && request.method === 'GET') {
+        const freeze = await getFreezeStatus(env.DB);
+        return jsonResponse({ ok: true, freeze });
+      }
+
       // 1) POST /api/auth — 닉네임 + PIN 원스텝 등록/로그인
       if (url.pathname === '/api/auth' && request.method === 'POST') {
+        const freeze = await getFreezeStatus(env.DB);
+        if (freeze.active) {
+          return jsonResponse(
+            {
+              ok: false,
+              code: 'RANKING_FROZEN',
+              freeze,
+              error: freeze.message,
+            },
+            403
+          );
+        }
+
         const body = await request.json().catch(() => ({}));
         const nickCheck = validateNickname(body.nickname);
         if (!nickCheck.ok) return jsonResponse({ ok: false, error: nickCheck.error }, 400);
@@ -708,20 +832,22 @@ export default {
 
       // 2) GET /api/me — 내 세션 확인
       if (url.pathname === '/api/me' && request.method === 'GET') {
+        const freeze = await getFreezeStatus(env.DB);
         const user = await verifySessionToken(
           request.headers.get('Authorization'),
           env.DB,
           secretSeed
         );
         if (!user) {
-          return jsonResponse({ ok: false, error: '로그인이 필요합니다.' }, 401);
+          return jsonResponse({ ok: false, freeze, error: '로그인이 필요합니다.' }, 401);
         }
         const myRank = await getUserRank(env.DB, user);
-        return jsonResponse({ ok: true, user: formatUserProfile(user, myRank) });
+        return jsonResponse({ ok: true, freeze, user: formatUserProfile(user, myRank) });
       }
 
-      // 3) GET /api/rankings — 전체 랭킹 보드 조회
+      // 3) GET /api/rankings — 전체 랭킹 보드 조회 (동결 시간에도 열람 허용)
       if (url.pathname === '/api/rankings' && request.method === 'GET') {
+        const freeze = await getFreezeStatus(env.DB);
         const user = await verifySessionToken(
           request.headers.get('Authorization'),
           env.DB,
@@ -730,6 +856,7 @@ export default {
         const board = await getRankingsPayload(env.DB, user);
         return jsonResponse({
           ok: true,
+          freeze,
           ...board,
           me: user ? formatUserProfile(user, board.myRank) : null,
         });
@@ -737,6 +864,19 @@ export default {
 
       // 4) POST /api/score — 게임 결과 점수 등록
       if (url.pathname === '/api/score' && request.method === 'POST') {
+        const freeze = await getFreezeStatus(env.DB);
+        if (freeze.active) {
+          return jsonResponse(
+            {
+              ok: false,
+              code: 'RANKING_FROZEN',
+              freeze,
+              error: freeze.message,
+            },
+            403
+          );
+        }
+
         const user = await verifySessionToken(
           request.headers.get('Authorization'),
           env.DB,

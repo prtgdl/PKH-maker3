@@ -287,6 +287,82 @@
       color: var(--ink-soft);
     }
 
+    /* 랭킹 동결 설정 패널 */
+    .freeze-panel {
+      background: var(--card);
+      border: 2px solid var(--ink);
+      box-shadow: inset 0 0 0 1.5px #fbf7f0, -3px 3px 0 rgba(24, 15, 13, 0.24);
+      padding: 14px 16px;
+      margin-bottom: 18px;
+    }
+
+    .freeze-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .freeze-header h2 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 16px;
+    }
+
+    .freeze-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border: 1.5px solid var(--ink);
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      background: var(--sub);
+      color: var(--ink);
+    }
+    .freeze-badge.is-active {
+      background: var(--red);
+      color: #f8f2ea;
+    }
+    .freeze-badge.is-scheduled {
+      background: var(--gold);
+      color: var(--ink);
+    }
+
+    .freeze-desc {
+      margin: 0 0 12px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+    }
+
+    .freeze-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .freeze-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .freeze-field span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .dt-input {
+      padding: 7px 10px;
+      border: 1.5px solid var(--ink);
+      background: #fffdf9;
+      color: var(--ink);
+      font-size: 13px;
+      font-family: inherit;
+    }
+
     /* 탭 & 본문 패널 */
     .main-panel {
       background: var(--card);
@@ -565,6 +641,29 @@
       <div class="ratio-grid" id="ending-ratio-grid"></div>
     </section>
 
+    <!-- 랭킹 동결 (집계 시간 플레이·닉네임 등록 제한) 설정 -->
+    <section class="freeze-panel">
+      <div class="freeze-header">
+        <h2>랭킹 동결 (집계 시간 플레이 · 닉네임 등록 제한)</h2>
+        <span id="freeze-status-badge" class="freeze-badge">상태 확인 중...</span>
+      </div>
+      <p class="freeze-desc" id="freeze-status-desc">
+        설정한 동결 시작 일시부터 중단 일시까지는 게임 플레이, 점수 기록, 닉네임 신규 등록이 차단되며 랭킹 조회만 가능합니다. 중단 일시가 지나면 자동으로 다시 플레이할 수 있습니다.
+      </p>
+      <div class="freeze-controls">
+        <label class="freeze-field">
+          <span>동결 시작 일시 (KST)</span>
+          <input type="datetime-local" id="freeze-start-input" class="dt-input" />
+        </label>
+        <label class="freeze-field">
+          <span>동결 중단(해제) 일시 (KST)</span>
+          <input type="datetime-local" id="freeze-end-input" class="dt-input" />
+        </label>
+        <button type="button" id="btn-freeze-save" class="btn btn-primary">동결 일정 적용</button>
+        <button type="button" id="btn-freeze-clear" class="btn btn-wood">동결 즉시 해제</button>
+      </div>
+    </section>
+
     <!-- 유저 & 랭킹 테이블 / 매 판 플레이 로그 탭 -->
     <section class="main-panel">
       <div class="tabs-bar">
@@ -798,14 +897,51 @@
         if (status !== 200 || !data.ok) return;
 
         state.summary = data.summary;
+        state.freeze = data.freeze || null;
         state.users = data.users || [];
         state.logs = data.logs || [];
 
         const nowStr = new Date().toLocaleTimeString('ko-KR', { hour12: false });
         document.getElementById('last-updated-text').textContent = `마지막 조회: ${nowStr}`;
 
+        renderFreezeStatus();
         renderSummary();
         renderTables();
+      }
+
+      function renderFreezeStatus() {
+        const f = state.freeze;
+        const badge = document.getElementById('freeze-status-badge');
+        const desc = document.getElementById('freeze-status-desc');
+        const startInput = document.getElementById('freeze-start-input');
+        const endInput = document.getElementById('freeze-end-input');
+
+        badge.classList.remove('is-active', 'is-scheduled');
+
+        if (!f || !f.hasSchedule) {
+          badge.textContent = '평상시 (제한 없음)';
+          desc.textContent =
+            '현재 설정된 동결 일정이 없습니다. 시작 일시와 중단 일시를 지정하면 해당 시간 동안 게임 플레이와 닉네임 등록이 제한됩니다.';
+          startInput.value = '';
+          endInput.value = '';
+          return;
+        }
+
+        if (f.startKst) startInput.value = f.startKst;
+        if (f.endKst) endInput.value = f.endKst;
+
+        if (f.status === 'active') {
+          badge.textContent = '현재 랭킹 동결 진행 중';
+          badge.classList.add('is-active');
+          desc.textContent = `동결 적용 구간: ${f.startDisplay} ~ ${f.endDisplay} (유저 안내: "${f.message}")`;
+        } else if (f.status === 'scheduled') {
+          badge.textContent = '동결 예약됨';
+          badge.classList.add('is-scheduled');
+          desc.textContent = `예약된 동결 구간: ${f.startDisplay} ~ ${f.endDisplay} (시작 시각이 되면 자동으로 플레이와 닉네임 등록이 제한됩니다.)`;
+        } else {
+          badge.textContent = '동결 기간 종료됨 (자동 해제 완료)';
+          desc.textContent = `최근 종료된 동결 구간: ${f.startDisplay} ~ ${f.endDisplay} (현재 정상 플레이 가능 상태입니다.)`;
+        }
       }
 
       function renderSummary() {
@@ -959,6 +1095,48 @@
       });
 
       document.getElementById('btn-reload').addEventListener('click', loadOverview);
+
+      // 랭킹 동결 저장 및 즉시 해제
+      document.getElementById('btn-freeze-save').addEventListener('click', async () => {
+        const startKst = document.getElementById('freeze-start-input').value.trim();
+        const endKst = document.getElementById('freeze-end-input').value.trim();
+        if (!startKst || !endKst) {
+          alert('동결 시작 일시와 중단(해제) 일시를 모두 선택해 주세요.');
+          return;
+        }
+        const saveBtn = document.getElementById('btn-freeze-save');
+        saveBtn.disabled = true;
+        const { status, data } = await adminFetch('/api/admin/freeze', {
+          method: 'POST',
+          body: JSON.stringify({ startKst, endKst }),
+        });
+        saveBtn.disabled = false;
+        if (status === 200 && data.ok) {
+          state.freeze = data.freeze;
+          renderFreezeStatus();
+          alert(`랭킹 동결 일정이 적용되었습니다.\n(${data.freeze.startDisplay} ~ ${data.freeze.endDisplay})`);
+        } else {
+          alert(data.error || '동결 일정 저장에 실패했습니다.');
+        }
+      });
+
+      document.getElementById('btn-freeze-clear').addEventListener('click', async () => {
+        if (!window.confirm('현재 설정된 랭킹 동결 일정을 해제할까요?')) return;
+        const clearBtn = document.getElementById('btn-freeze-clear');
+        clearBtn.disabled = true;
+        const { status, data } = await adminFetch('/api/admin/freeze', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'clear' }),
+        });
+        clearBtn.disabled = false;
+        if (status === 200 && data.ok) {
+          state.freeze = data.freeze;
+          renderFreezeStatus();
+          alert('랭킹 동결이 해제되었습니다.');
+        } else {
+          alert(data.error || '동결 해제에 실패했습니다.');
+        }
+      });
 
       document.querySelectorAll('[data-tab]').forEach((btn) => {
         btn.addEventListener('click', () => {

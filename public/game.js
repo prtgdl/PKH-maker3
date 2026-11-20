@@ -478,6 +478,7 @@
   const modalAuth = document.getElementById('modal-auth');
   const modalRanking = document.getElementById('modal-ranking');
   const modalGuide = document.getElementById('modal-guide');
+  const modalFreeze = document.getElementById('modal-freeze');
 
   function syncTopHudDOM() {
     const inTitle = gameState.phase === 'title';
@@ -597,6 +598,74 @@
   // =========================================================================
   // 6. 인증 & 랭킹 API 연동
   // =========================================================================
+  const freezeState = {
+    startAt: 0,
+    endAt: 0,
+    endDisplay: '',
+  };
+
+  function syncFreezeState(f) {
+    if (!f || !f.hasSchedule) {
+      freezeState.startAt = 0;
+      freezeState.endAt = 0;
+      freezeState.endDisplay = '';
+      return;
+    }
+    freezeState.startAt = Number(f.startAt || 0);
+    freezeState.endAt = Number(f.endAt || 0);
+    freezeState.endDisplay = String(f.endDisplay || '');
+  }
+
+  function getLocalFreezeInfo() {
+    const now = Date.now();
+    if (
+      freezeState.startAt > 0 &&
+      freezeState.endAt > freezeState.startAt &&
+      now >= freezeState.startAt &&
+      now < freezeState.endAt
+    ) {
+      return {
+        active: true,
+        message: `현재 랭킹 집계 시간입니다. ${freezeState.endDisplay} 이후에 다시 플레이할 수 있습니다.`,
+      };
+    }
+    return { active: false, message: '' };
+  }
+
+  async function fetchFreezeStatus() {
+    try {
+      await apiFetch('/api/status');
+    } catch {}
+    return getLocalFreezeInfo();
+  }
+
+  function showFreezeNotice(msg) {
+    const textEl = document.getElementById('freeze-modal-text');
+    if (textEl) {
+      textEl.textContent =
+        msg ||
+        (freezeState.endDisplay
+          ? `현재 랭킹 집계 시간입니다. ${freezeState.endDisplay} 이후에 다시 플레이할 수 있습니다.`
+          : '현재 랭킹 집계 시간입니다.');
+    }
+    openModal(modalFreeze);
+  }
+
+  async function checkBlockedByFreeze() {
+    const localInfo = getLocalFreezeInfo();
+    if (localInfo.active) {
+      showFreezeNotice(localInfo.message);
+      fetchFreezeStatus();
+      return true;
+    }
+    const remoteInfo = await fetchFreezeStatus();
+    if (remoteInfo.active) {
+      showFreezeNotice(remoteInfo.message);
+      return true;
+    }
+    return false;
+  }
+
   async function apiFetch(path, options = {}) {
     const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
     if (authState.token) {
@@ -604,6 +673,9 @@
     }
     const res = await fetch(path, { ...options, headers });
     const data = await res.json();
+    if (data && data.freeze) {
+      syncFreezeState(data.freeze);
+    }
     return { status: res.status, data };
   }
 
@@ -636,6 +708,7 @@
   async function restoreSession() {
     if (!authState.token) {
       updateAccountUI();
+      fetchFreezeStatus();
       return;
     }
     try {
@@ -671,7 +744,11 @@
         body: JSON.stringify({ nickname, pin }),
       });
       if (!data.ok) {
-        return { ok: false, error: data.error || '등록에 실패했습니다.' };
+        return {
+          ok: false,
+          frozen: data.code === 'RANKING_FROZEN',
+          error: data.error || '등록에 실패했습니다.',
+        };
       }
       authState.token = data.token;
       authState.user = data.user;
@@ -727,6 +804,12 @@
     const newRecEl = document.getElementById('result-new-record');
 
     if (!authState.user) {
+      const fInfo = getLocalFreezeInfo();
+      if (fInfo.active) {
+        regBtnEl.hidden = true;
+        rankMsgEl.textContent = fInfo.message;
+        return;
+      }
       authState.pendingResult = payload;
       rankMsgEl.textContent =
         payload.score > 0
@@ -881,8 +964,14 @@
         myBarText.textContent = `${authState.user.nickname} 님, 아직 등록된 점수가 없습니다.`;
       }
     } else {
-      myLoginBtn.hidden = false;
-      myBarText.textContent = '닉네임을 등록하면 내 순위가 표시됩니다.';
+      const fInfo = getLocalFreezeInfo();
+      if (fInfo.active) {
+        myLoginBtn.hidden = true;
+        myBarText.textContent = fInfo.message;
+      } else {
+        myLoginBtn.hidden = false;
+        myBarText.textContent = '닉네임을 등록하면 내 순위가 표시됩니다.';
+      }
     }
   }
 
@@ -1556,10 +1645,15 @@
       else if (gameState.phase === 'paused') togglePause(false);
     });
 
-    document.getElementById('btn-start-game').addEventListener('click', () => startNewGame());
-    document.getElementById('btn-retry').addEventListener('click', () => startNewGame());
+    const tryStartNewGame = async () => {
+      if (await checkBlockedByFreeze()) return;
+      startNewGame();
+    };
+
+    document.getElementById('btn-start-game').addEventListener('click', tryStartNewGame);
+    document.getElementById('btn-retry').addEventListener('click', tryStartNewGame);
     document.getElementById('btn-resume').addEventListener('click', () => togglePause(false));
-    document.getElementById('btn-restart-pause').addEventListener('click', () => startNewGame());
+    document.getElementById('btn-restart-pause').addEventListener('click', tryStartNewGame);
 
     const goHome = () => {
       sound.stopBgm();
@@ -1573,7 +1667,8 @@
     document.getElementById('btn-quit-home').addEventListener('click', goHome);
     document.getElementById('btn-result-home').addEventListener('click', goHome);
 
-    const openAuthModal = () => {
+    const openAuthModal = async () => {
+      if (await checkBlockedByFreeze()) return;
       document.getElementById('auth-error-msg').hidden = true;
       if (authState.user) {
         document.getElementById('input-nickname').value = authState.user.nickname;
@@ -1609,7 +1704,8 @@
       });
     });
 
-    [modalAuth, modalRanking, modalGuide].forEach((m) => {
+    [modalAuth, modalRanking, modalGuide, modalFreeze].forEach((m) => {
+      if (!m) return;
       m.addEventListener('click', (e) => {
         if (e.target === m) closeModal(m);
       });
@@ -1632,6 +1728,11 @@
       labelEl.textContent = '확인';
 
       if (!res.ok) {
+        if (res.frozen) {
+          closeModal(modalAuth);
+          showFreezeNotice(res.error);
+          return;
+        }
         errEl.textContent = res.error;
         errEl.hidden = false;
         return;
