@@ -8,7 +8,7 @@ window.PKH_CONFIG = {
     logoImage: 'assets/logo.webp',
     playButtonImage: 'assets/btn_play.webp',
     stageBackground: 'assets/bg_stage.webp',
-    subtitle: 'P.K.H☆의 운명을 결정할\n운명의 징표를 모아보세요',
+    subtitle: 'P.K.H☆의 운명을 결정할\n징표를 모아보세요',
     simpleRules: '좌우로 이동 · 주어진 기회는 세 번!',
     guideIntro:
       '좌우로 움직이며 운명을 상징하는 징표를 모아보세요.\n당신의 선택에 따라 P.K.H☆의 운명이 결정됩니다.',
@@ -56,7 +56,7 @@ window.PKH_CONFIG = {
       characterImage: 'assets/char_simon.webp',
       resultTitle: '사이먼',
       resultComment:
-        '도넛과 힙플라스크가 이끈 운명은 사이먼이었습니다. 모스크바의 낮은 하늘 아래 첫발을 내디딘 당신. 볼티모어에서는 또 어떤 일이 기다리고 있을까요?',
+        '도넛과 힙플라스크가 이끈 운명은 사이먼이었습니다.\n모스크바의 낮은 하늘 아래 첫발을 내디딘 당신. 볼티모어에서는 또 어떤 일이 기다리고 있을까요?',
       items: [
         { id: 'simon_donut', name: '엔젤스 도넛', image: 'assets/item_simon_1.webp' },
         { id: 'simon_flask', name: '힙플라스크', image: 'assets/item_simon_2.webp' },
@@ -70,7 +70,7 @@ window.PKH_CONFIG = {
       characterImage: 'assets/char_goldmund.webp',
       resultTitle: '골드문트',
       resultComment:
-        '나르치스와 수많은 사랑이 이끈 운명은 골드문트였습니다. 수많은 감각의 조각을 품고 환희의 베일을 걷어낸 끝에 마주할 비밀. 각자의 길 끝에서 만나게 될 마음은 어떤 모습일까요?',
+        '나르치스와 수많은 사랑이 이끈 운명은 골드문트였습니다.\n수많은 감각의 조각을 품고 환희의 베일을 걷어낸 끝에 마주할 비밀. 각자의 길 끝에서 만나게 될 마음은 어떤 모습일까요?',
       items: [
         { id: 'goldmund_cross', name: '십자가', image: 'assets/item_goldmund_1.webp' },
         { id: 'goldmund_mask', name: '꽃가면', image: 'assets/item_goldmund_2.webp' },
@@ -84,7 +84,7 @@ window.PKH_CONFIG = {
       characterImage: 'assets/char_philos.webp',
       resultTitle: '필로스',
       resultComment:
-        '나비와 황금빛 목걸이가 이끈 운명은 필로스였습니다\n맨하튼의 작은 빈티지샵에서 펼쳐지는 연극 속으로 당신을 초대합니다. 나만의 신을 따라 광야를 찾아나서볼까요?',
+        '나비와 황금빛 목걸이가 이끈 운명은 필로스였습니다.\n맨하튼의 작은 빈티지샵에서 펼쳐지는 연극 속으로 당신을 초대합니다. 나만의 신을 따라 광야를 찾아나서볼까요?',
       items: [
         { id: 'philos_butterfly', name: '나비', image: 'assets/item_philos_1.webp' },
         { id: 'philos_necklace', name: '황금빛 목걸이', image: 'assets/item_philos_2.webp' },
@@ -98,7 +98,7 @@ window.PKH_CONFIG = {
       characterImage: 'assets/char_remy.webp',
       resultTitle: '레미',
       resultComment:
-        '새빨간 피와 300년 후 미래에서 온 선물이 이끈 운명은 레미였습니다. 새빨간 열매보다, 새빨간 보석보다 더 아름다운 레미와 시간을 거스르는 뱀파이어 로맨스를 완성해 볼까요?',
+        '새빨간 피와 300년 후 미래에서 온 선물이 이끈 운명은 레미였습니다.\n새빨간 열매보다, 새빨간 보석보다 더 아름다운 레미와 시간을 거스르는 뱀파이어 로맨스를 완성해 볼까요?',
       items: [
         { id: 'remy_blood', name: '달콤한 피', image: 'assets/item_remy_1.webp' },
         { id: 'remy_chess', name: '300년 후 선물', image: 'assets/item_remy_2.webp' },
@@ -115,7 +115,7 @@ window.PKH_CONFIG = {
     characterImage: 'assets/char_basic.webp',
     resultTitle: 'P.K.H☆',
     resultComment:
-      '운명의 갈림길에서 아직 헤메는 중이군요. 괜찮습니다. 다시 한 번 운명의 갈림길 위에 올라 어떤 미래가 펼쳐질지 도전해보세요!',
+      '운명의 갈림길에서 아직 헤메는 중이군요. 괜찮습니다.\n다시 한 번 운명의 갈림길 위에 올라 어떤 미래가 펼쳐질지 도전해보세요!',
   },
 
   // 6) 0점(징표를 하나도 못 먹고 종료)일 때 — 기니피그 엔딩
@@ -126,7 +126,7 @@ window.PKH_CONFIG = {
     bgTint: '#efe4d4',
     characterImage: 'assets/char_guinea_zero.webp',
     resultTitle: '인간이 되고 싶었어...',
-    resultComment: '꾸...이... 꾸...이꾸이... (재..도전... 재도전...)',
+    resultComment: '꾸...이... 꾸...이꾸이...\n(재..도전... 재도전...)',
   },
 
   // 5. 점수 설정 (기본 100점 + 연속 콤보당 +10점(최대 +100점), 암전 구간 전체 2배)
