@@ -890,21 +890,30 @@
 
   function getLocalRankingsSorted() {
     const list = getLocalStore()
-      .filter((u) => u.bestScore > 0)
-      .sort((a, b) => b.bestScore - a.bestScore || a.updatedAt - b.updatedAt);
+      .filter((u) => Number(u.playCount || 0) > 0)
+      .sort(
+        (a, b) =>
+          (b.bestScore || 0) - (a.bestScore || 0) ||
+          (b.bestSurvivalSec || 0) - (a.bestSurvivalSec || 0) ||
+          a.updatedAt - b.updatedAt
+      );
     let prevScore = null;
+    let prevSurvival = null;
     let currentRank = 0;
     return list.map((u, i) => {
-      if (u.bestScore !== prevScore) {
+      const score = Number(u.bestScore || 0);
+      const survival = Number(u.bestSurvivalSec || 0);
+      if (score !== prevScore || survival !== prevSurvival) {
         currentRank = i + 1;
-        prevScore = u.bestScore;
+        prevScore = score;
+        prevSurvival = survival;
       }
       return {
         rank: currentRank,
         nickname: u.nickname,
-        bestScore: u.bestScore,
-        bestCharacter: u.bestCharacter || 'basic',
-        bestSurvivalSec: u.bestSurvivalSec || 0,
+        bestScore: score,
+        bestCharacter: u.bestCharacter || 'guinea',
+        bestSurvivalSec: survival,
         isMe: authState.user
           ? u.nickname.toLowerCase() === authState.user.nickname.toLowerCase()
           : false,
@@ -979,12 +988,12 @@
 
     if (authState.user) {
       myLoginBtn.hidden = true;
-      if (authState.user.bestScore > 0) {
+      if (Number(authState.user.playCount || 0) > 0) {
         myBarText.textContent = `내 최고 기록: ${authState.user.bestScore.toLocaleString()}점 (${
           myRank ? `${myRank}위` : '-'
         })`;
       } else {
-        myBarText.textContent = `${authState.user.nickname} 님, 아직 등록된 점수가 없습니다.`;
+        myBarText.textContent = `${authState.user.nickname} 님, 아직 플레이한 기록이 없습니다.`;
       }
     } else {
       const fInfo = getLocalFreezeInfo();

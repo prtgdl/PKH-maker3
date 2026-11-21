@@ -345,14 +345,25 @@ function parseRoleCounts(jsonStr) {
 }
 
 async function getUserRank(db, user) {
-  if (!user || user.best_score <= 0) return null;
+  if (!user || Number(user.play_count || 0) === 0) return null;
   const row = await db
     .prepare(
       `SELECT COUNT(*) + 1 AS rank
        FROM users
-       WHERE best_score > ?`
+       WHERE play_count > 0 AND (
+         best_score > ? OR
+         (best_score = ? AND best_survival_sec > ?) OR
+         (best_score = ? AND best_survival_sec = ? AND updated_at < ?)
+       )`
     )
-    .bind(user.best_score)
+    .bind(
+      user.best_score,
+      user.best_score,
+      user.best_survival_sec,
+      user.best_score,
+      user.best_survival_sec,
+      user.updated_at
+    )
     .first();
   return row ? Number(row.rank) : null;
 }
@@ -362,31 +373,34 @@ async function getRankingsPayload(db, currentUser = null) {
     .prepare(
       `SELECT id, nickname, best_score, best_character, best_survival_sec, updated_at
        FROM users
-       WHERE best_score > 0
-       ORDER BY best_score DESC, updated_at ASC, id ASC`
+       WHERE play_count > 0
+       ORDER BY best_score DESC, best_survival_sec DESC, updated_at ASC, id ASC`
     )
     .all();
 
   let prevScore = null;
+  let prevSurvival = null;
   let currentRank = 0;
   const rankings = (results || []).map((r, idx) => {
     const score = Number(r.best_score);
-    if (score !== prevScore) {
+    const survival = Number(r.best_survival_sec || 0);
+    if (score !== prevScore || survival !== prevSurvival) {
       currentRank = idx + 1;
       prevScore = score;
+      prevSurvival = survival;
     }
     return {
       rank: currentRank,
       nickname: r.nickname,
       bestScore: score,
-      bestCharacter: r.best_character || 'basic',
-      bestSurvivalSec: Number(r.best_survival_sec || 0),
+      bestCharacter: r.best_character || 'guinea',
+      bestSurvivalSec: survival,
       isMe: currentUser ? r.id === currentUser.id : false,
     };
   });
 
   let myRank = null;
-  if (currentUser && currentUser.best_score > 0) {
+  if (currentUser && Number(currentUser.play_count || 0) > 0) {
     const meRow = rankings.find((r) => r.isMe);
     myRank = meRow ? meRow.rank : await getUserRank(db, currentUser);
   }
@@ -405,14 +419,15 @@ function formatUserProfile(user, myRank = null) {
   } catch {
     unlocked = [];
   }
+  const hasPlayed = Number(user.play_count || 0) > 0;
   return {
     nickname: user.nickname,
     bestScore: Number(user.best_score || 0),
-    bestCharacter: user.best_character || 'guinea',
+    bestCharacter: hasPlayed ? (user.best_character || 'guinea') : null,
     bestSurvivalSec: Number(user.best_survival_sec || 0),
     playCount: Number(user.play_count || 0),
     unlockedEndings: Array.isArray(unlocked) ? unlocked : [],
-    myRank,
+    myRank: hasPlayed ? myRank : null,
   };
 }
 
@@ -544,7 +559,11 @@ export default {
             `SELECT id, nickname, best_score, best_character, best_survival_sec, best_role_counts,
                     unlocked_endings, play_count, created_at, updated_at
              FROM users
-             ORDER BY best_score DESC, updated_at ASC, id ASC`
+             ORDER BY (CASE WHEN play_count > 0 THEN 1 ELSE 0 END) DESC,
+                      best_score DESC,
+                      best_survival_sec DESC,
+                      updated_at ASC,
+                      id ASC`
           ).all();
 
           const { results: logRows } = await env.DB.prepare(
@@ -568,6 +587,7 @@ export default {
 
           let currentRank = 0;
           let prevScore = null;
+          let prevSurvival = null;
           let scoredUsers = 0;
           const bestEndingCounts = {
             simon: 0,
@@ -579,15 +599,18 @@ export default {
           };
 
           const users = (userRows || []).map((u) => {
+            const playCount = Number(u.play_count || 0);
             const bestScore = Number(u.best_score || 0);
-            const hasScore = bestScore > 0;
-            if (hasScore) {
+            const bestSurvival = Number(u.best_survival_sec || 0);
+            const hasPlayed = playCount > 0;
+            if (hasPlayed) {
               scoredUsers += 1;
-              if (bestScore !== prevScore) {
+              if (bestScore !== prevScore || bestSurvival !== prevSurvival) {
                 currentRank = scoredUsers;
                 prevScore = bestScore;
+                prevSurvival = bestSurvival;
               }
-              const cid = VALID_CHARACTERS.has(u.best_character) ? u.best_character : 'basic';
+              const cid = VALID_CHARACTERS.has(u.best_character) ? u.best_character : 'guinea';
               bestEndingCounts[cid] = (bestEndingCounts[cid] || 0) + 1;
             }
             let unlocked = [];
@@ -596,14 +619,13 @@ export default {
             } catch {
               unlocked = [];
             }
-            const playCount = Number(u.play_count || 0);
             return {
               id: Number(u.id),
-              rank: hasScore ? currentRank : null,
+              rank: hasPlayed ? currentRank : null,
               nickname: u.nickname,
               bestScore,
-              bestCharacter: playCount > 0 ? (u.best_character || 'guinea') : null,
-              bestSurvivalSec: Number(u.best_survival_sec || 0),
+              bestCharacter: hasPlayed ? (u.best_character || 'guinea') : null,
+              bestSurvivalSec: bestSurvival,
               bestRoleCounts: parseRoleCounts(u.best_role_counts),
               unlockedEndings: Array.isArray(unlocked) ? unlocked : [],
               playCount,

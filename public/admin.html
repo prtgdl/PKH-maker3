@@ -919,32 +919,45 @@
           localUsers = [];
         }
 
-        localUsers.sort((a, b) => (b.bestScore || 0) - (a.bestScore || 0));
+        localUsers.sort((a, b) => {
+          const aPlayed = Number(a.playCount || 0) > 0 ? 1 : 0;
+          const bPlayed = Number(b.playCount || 0) > 0 ? 1 : 0;
+          if (aPlayed !== bPlayed) return bPlayed - aPlayed;
+          return (
+            (b.bestScore || 0) - (a.bestScore || 0) ||
+            (b.bestSurvivalSec || 0) - (a.bestSurvivalSec || 0) ||
+            String(a.createdAt).localeCompare(String(b.createdAt))
+          );
+        });
 
         let currentRank = 0;
         let lastScore = null;
+        let lastSurvival = null;
         const bestEndingCounts = {};
 
         const users = localUsers.map((u, i) => {
           const score = Number(u.bestScore || 0);
-          if (score > 0) {
-            if (lastScore === null || score < lastScore) {
+          const survival = Number(u.bestSurvivalSec || 0);
+          const playCount = Number(u.playCount || 0);
+          const hasPlayed = playCount > 0;
+          if (hasPlayed) {
+            if (lastScore === null || score !== lastScore || survival !== lastSurvival) {
               currentRank = i + 1;
               lastScore = score;
+              lastSurvival = survival;
             }
           }
           const cid = u.bestCharacter || 'guinea';
-          if (score > 0) {
+          if (hasPlayed) {
             bestEndingCounts[cid] = (bestEndingCounts[cid] || 0) + 1;
           }
-          const playCount = Number(u.playCount || 0);
           return {
             id: i + 1,
-            rank: score > 0 ? currentRank : null,
+            rank: hasPlayed ? currentRank : null,
             nickname: u.nickname,
             bestScore: score,
-            bestCharacter: playCount > 0 ? cid : null,
-            bestSurvivalSec: Number(u.bestSurvivalSec || 0),
+            bestCharacter: hasPlayed ? cid : null,
+            bestSurvivalSec: survival,
             bestRoleCounts: u.bestRoleCounts || {},
             unlockedEndings: Array.isArray(u.unlockedEndings) ? u.unlockedEndings : [],
             playCount,
@@ -954,7 +967,7 @@
         });
 
         const totalUsers = users.length;
-        const scoredUsers = users.filter((u) => u.bestScore > 0).length;
+        const scoredUsers = users.filter((u) => u.playCount > 0).length;
         const totalPlays = users.reduce((sum, u) => sum + (u.playCount || 0), 0);
 
         state.summary = {
@@ -1074,7 +1087,7 @@
 
         let arr = state.users.filter((u) => {
           if (q && !u.nickname.toLowerCase().includes(q)) return false;
-          if (filterVal === 'ranked') return u.bestScore > 0;
+          if (filterVal === 'ranked') return u.playCount > 0;
           if (filterVal === 'complete') return u.unlockedEndings && u.unlockedEndings.length >= 6;
           if (filterVal !== 'all') return u.playCount > 0 && u.bestCharacter === filterVal;
           return true;
