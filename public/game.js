@@ -703,14 +703,12 @@
       elAccountText.textContent = `${authState.user.nickname}${bestTxt}`;
       loggedBox.hidden = false;
       loggedSummary.textContent = `현재 닉네임: ${authState.user.nickname}`;
-      if (btnOpenGallery) btnOpenGallery.hidden = false;
-      if (btnResultGallery) btnResultGallery.hidden = false;
     } else {
       elAccountText.textContent = '닉네임 등록';
       loggedBox.hidden = true;
-      if (btnOpenGallery) btnOpenGallery.hidden = true;
-      if (btnResultGallery) btnResultGallery.hidden = true;
     }
+    if (btnOpenGallery) btnOpenGallery.hidden = false;
+    if (btnResultGallery) btnResultGallery.hidden = false;
   }
 
   async function restoreSession() {
@@ -1012,8 +1010,9 @@
   ];
 
   function renderGalleryModal() {
+    const isGuest = !authState.user;
     const unlockedList =
-      authState.user && Array.isArray(authState.user.unlockedEndings)
+      !isGuest && Array.isArray(authState.user.unlockedEndings)
         ? authState.user.unlockedEndings
         : [];
     const unlockedSet = new Set(unlockedList);
@@ -1023,9 +1022,14 @@
       countBadge.textContent = `${unlockedSet.size} / ${ALL_GALLERY_ROLES.length}`;
     }
 
+    const guestBanner = document.getElementById('gallery-guest-banner');
+    if (guestBanner) {
+      guestBanner.hidden = !isGuest;
+    }
+
     const completeBanner = document.getElementById('gallery-complete-banner');
     if (completeBanner) {
-      completeBanner.hidden = unlockedSet.size < ALL_GALLERY_ROLES.length;
+      completeBanner.hidden = isGuest || unlockedSet.size < ALL_GALLERY_ROLES.length;
     }
 
     const grid = document.getElementById('gallery-grid');
@@ -1819,6 +1823,21 @@
     };
     if (btnOpenGallery) btnOpenGallery.addEventListener('click', openGalleryModal);
     if (btnResultGallery) btnResultGallery.addEventListener('click', openGalleryModal);
+
+    const galleryGuestBanner = document.getElementById('gallery-guest-banner');
+    if (galleryGuestBanner) {
+      const handleGuestBannerClick = () => {
+        closeModal(modalGallery);
+        openModal(modalAuth);
+      };
+      galleryGuestBanner.addEventListener('click', handleGuestBannerClick);
+      galleryGuestBanner.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleGuestBannerClick();
+        }
+      });
+    }
 
     document.querySelectorAll('[data-close-modal]').forEach((btn) => {
       btn.addEventListener('click', () => {

@@ -1303,6 +1303,32 @@ input {
   padding: 2px 9px;
 }
 
+.gallery-guest-banner {
+  background: var(--paper-sub);
+  border: 1.5px dashed #c48b94;
+  color: var(--ink);
+  font-family: var(--font-pixel);
+  font-size: clamp(10.5px, 2.7cqw, 12px);
+  line-height: 1.5;
+  text-align: center;
+  padding: 1.8cqw 2.4cqw;
+  margin-top: 1.2cqw;
+  margin-bottom: 2.2cqw;
+  word-break: keep-all;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.gallery-guest-banner:hover {
+  background: #fce4e8;
+  border-color: var(--plaque-red);
+}
+
+.gallery-guest-banner:active {
+  transform: translate(0, 1px);
+}
+
 .gallery-complete-banner {
   background-color: var(--plaque-red);
   color: #fff7f8;
