@@ -891,29 +891,21 @@
   function getLocalRankingsSorted() {
     const list = getLocalStore()
       .filter((u) => Number(u.playCount || 0) > 0)
-      .sort(
-        (a, b) =>
-          (b.bestScore || 0) - (a.bestScore || 0) ||
-          (b.bestSurvivalSec || 0) - (a.bestSurvivalSec || 0) ||
-          a.updatedAt - b.updatedAt
-      );
+      .sort((a, b) => (b.bestScore || 0) - (a.bestScore || 0) || a.updatedAt - b.updatedAt);
     let prevScore = null;
-    let prevSurvival = null;
     let currentRank = 0;
     return list.map((u, i) => {
       const score = Number(u.bestScore || 0);
-      const survival = Number(u.bestSurvivalSec || 0);
-      if (score !== prevScore || survival !== prevSurvival) {
+      if (score !== prevScore) {
         currentRank = i + 1;
         prevScore = score;
-        prevSurvival = survival;
       }
       return {
         rank: currentRank,
         nickname: u.nickname,
         bestScore: score,
         bestCharacter: u.bestCharacter || 'guinea',
-        bestSurvivalSec: survival,
+        bestSurvivalSec: Number(u.bestSurvivalSec || 0),
         isMe: authState.user
           ? u.nickname.toLowerCase() === authState.user.nickname.toLowerCase()
           : false,

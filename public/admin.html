@@ -925,14 +925,12 @@
           if (aPlayed !== bPlayed) return bPlayed - aPlayed;
           return (
             (b.bestScore || 0) - (a.bestScore || 0) ||
-            (b.bestSurvivalSec || 0) - (a.bestSurvivalSec || 0) ||
             String(a.createdAt).localeCompare(String(b.createdAt))
           );
         });
 
         let currentRank = 0;
         let lastScore = null;
-        let lastSurvival = null;
         const bestEndingCounts = {};
 
         const users = localUsers.map((u, i) => {
@@ -941,10 +939,9 @@
           const playCount = Number(u.playCount || 0);
           const hasPlayed = playCount > 0;
           if (hasPlayed) {
-            if (lastScore === null || score !== lastScore || survival !== lastSurvival) {
+            if (lastScore === null || score !== lastScore) {
               currentRank = i + 1;
               lastScore = score;
-              lastSurvival = survival;
             }
           }
           const cid = u.bestCharacter || 'guinea';

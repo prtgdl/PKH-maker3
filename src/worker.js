@@ -350,20 +350,9 @@ async function getUserRank(db, user) {
     .prepare(
       `SELECT COUNT(*) + 1 AS rank
        FROM users
-       WHERE play_count > 0 AND (
-         best_score > ? OR
-         (best_score = ? AND best_survival_sec > ?) OR
-         (best_score = ? AND best_survival_sec = ? AND updated_at < ?)
-       )`
+       WHERE play_count > 0 AND best_score > ?`
     )
-    .bind(
-      user.best_score,
-      user.best_score,
-      user.best_survival_sec,
-      user.best_score,
-      user.best_survival_sec,
-      user.updated_at
-    )
+    .bind(user.best_score)
     .first();
   return row ? Number(row.rank) : null;
 }
@@ -374,27 +363,24 @@ async function getRankingsPayload(db, currentUser = null) {
       `SELECT id, nickname, best_score, best_character, best_survival_sec, updated_at
        FROM users
        WHERE play_count > 0
-       ORDER BY best_score DESC, best_survival_sec DESC, updated_at ASC, id ASC`
+       ORDER BY best_score DESC, updated_at ASC, id ASC`
     )
     .all();
 
   let prevScore = null;
-  let prevSurvival = null;
   let currentRank = 0;
   const rankings = (results || []).map((r, idx) => {
     const score = Number(r.best_score);
-    const survival = Number(r.best_survival_sec || 0);
-    if (score !== prevScore || survival !== prevSurvival) {
+    if (score !== prevScore) {
       currentRank = idx + 1;
       prevScore = score;
-      prevSurvival = survival;
     }
     return {
       rank: currentRank,
       nickname: r.nickname,
       bestScore: score,
       bestCharacter: r.best_character || 'guinea',
-      bestSurvivalSec: survival,
+      bestSurvivalSec: Number(r.best_survival_sec || 0),
       isMe: currentUser ? r.id === currentUser.id : false,
     };
   });
@@ -561,7 +547,6 @@ export default {
              FROM users
              ORDER BY (CASE WHEN play_count > 0 THEN 1 ELSE 0 END) DESC,
                       best_score DESC,
-                      best_survival_sec DESC,
                       updated_at ASC,
                       id ASC`
           ).all();
@@ -587,7 +572,6 @@ export default {
 
           let currentRank = 0;
           let prevScore = null;
-          let prevSurvival = null;
           let scoredUsers = 0;
           const bestEndingCounts = {
             simon: 0,
@@ -605,10 +589,9 @@ export default {
             const hasPlayed = playCount > 0;
             if (hasPlayed) {
               scoredUsers += 1;
-              if (bestScore !== prevScore || bestSurvival !== prevSurvival) {
+              if (bestScore !== prevScore) {
                 currentRank = scoredUsers;
                 prevScore = bestScore;
-                prevSurvival = bestSurvival;
               }
               const cid = VALID_CHARACTERS.has(u.best_character) ? u.best_character : 'guinea';
               bestEndingCounts[cid] = (bestEndingCounts[cid] || 0) + 1;

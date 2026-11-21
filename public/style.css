@@ -1314,7 +1314,8 @@ input {
   letter-spacing: 0.08em;
   text-align: center;
   padding: 1cqw 2cqw;
-  margin-bottom: 2cqw;
+  margin-top: 2.2cqw;
+  margin-bottom: 2.2cqw;
   text-shadow: 0 1px 0 rgba(44, 12, 18, 0.7);
   flex-shrink: 0;
 }
