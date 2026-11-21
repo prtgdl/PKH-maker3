@@ -479,6 +479,10 @@
   const modalRanking = document.getElementById('modal-ranking');
   const modalGuide = document.getElementById('modal-guide');
   const modalFreeze = document.getElementById('modal-freeze');
+  const modalGallery = document.getElementById('modal-gallery');
+  const modalCardDetail = document.getElementById('modal-card-detail');
+  const btnOpenGallery = document.getElementById('btn-open-gallery');
+  const btnResultGallery = document.getElementById('btn-result-gallery');
 
   function syncTopHudDOM() {
     const inTitle = gameState.phase === 'title';
@@ -699,9 +703,13 @@
       elAccountText.textContent = `${authState.user.nickname}${bestTxt}`;
       loggedBox.hidden = false;
       loggedSummary.textContent = `현재 닉네임: ${authState.user.nickname}`;
+      if (btnOpenGallery) btnOpenGallery.hidden = false;
+      if (btnResultGallery) btnResultGallery.hidden = false;
     } else {
       elAccountText.textContent = '닉네임 등록';
       loggedBox.hidden = true;
+      if (btnOpenGallery) btnOpenGallery.hidden = true;
+      if (btnResultGallery) btnResultGallery.hidden = true;
     }
   }
 
@@ -835,6 +843,10 @@
         if (data.isNewRecord && payload.score > 0) {
           newRecEl.hidden = false;
         }
+        if (data.isNewUnlock) {
+          const newUnlockEl = document.getElementById('result-new-unlock');
+          if (newUnlockEl) newUnlockEl.hidden = false;
+        }
         const rankStr = data.myRank ? `현재 ${data.myRank}위` : '기록 저장 완료';
         rankMsgEl.textContent = `${authState.user.nickname} · ${rankStr} (최고 ${authState.user.bestScore.toLocaleString()}점)`;
         return;
@@ -846,6 +858,12 @@
         (u) => u.nickname.toLowerCase() === authState.user.nickname.toLowerCase()
       );
       if (idx !== -1) {
+        if (!list[idx].unlockedEndings) list[idx].unlockedEndings = [];
+        if (!list[idx].unlockedEndings.includes(payload.characterId)) {
+          list[idx].unlockedEndings.push(payload.characterId);
+          const newUnlockEl = document.getElementById('result-new-unlock');
+          if (newUnlockEl) newUnlockEl.hidden = false;
+        }
         if (payload.score > (list[idx].bestScore || 0)) {
           list[idx].bestScore = payload.score;
           list[idx].bestCharacter = payload.characterId;
@@ -973,6 +991,92 @@
         myBarText.textContent = '닉네임을 등록하면 내 순위가 표시됩니다.';
       }
     }
+  }
+
+  // =========================================================================
+  // 6-2. 엔딩 도감 모달 & 카드 상세 뷰어 로직
+  // =========================================================================
+  const ALL_GALLERY_ROLES = [
+    CFG.roles.find((r) => r.id === 'simon') || { id: 'simon', name: '사이먼' },
+    CFG.roles.find((r) => r.id === 'goldmund') || { id: 'goldmund', name: '골드문트' },
+    CFG.roles.find((r) => r.id === 'philos') || { id: 'philos', name: '필로스' },
+    CFG.roles.find((r) => r.id === 'remy') || { id: 'remy', name: '레미' },
+    hiddenRole,
+    zeroRole,
+  ];
+
+  function renderGalleryModal() {
+    const unlockedList =
+      authState.user && Array.isArray(authState.user.unlockedEndings)
+        ? authState.user.unlockedEndings
+        : [];
+    const unlockedSet = new Set(unlockedList);
+
+    const countBadge = document.getElementById('gallery-count-badge');
+    if (countBadge) {
+      countBadge.textContent = `${unlockedSet.size} / ${ALL_GALLERY_ROLES.length}`;
+    }
+
+    const completeBanner = document.getElementById('gallery-complete-banner');
+    if (completeBanner) {
+      completeBanner.hidden = unlockedSet.size < ALL_GALLERY_ROLES.length;
+    }
+
+    const grid = document.getElementById('gallery-grid');
+    if (!grid) return;
+
+    grid.innerHTML = ALL_GALLERY_ROLES.map((role) => {
+      const isUnlocked = unlockedSet.has(role.id);
+      if (!isUnlocked) {
+        return `
+          <div class="gallery-card locked" aria-label="잠긴 엔딩">
+            <img src="${role.characterImage}" alt="" class="gallery-card-thumb" draggable="false" />
+            <span class="locked-secret">? ? ?</span>
+          </div>`;
+      }
+      const title = role.resultTitle || role.name;
+      return `
+        <div class="gallery-card unlocked" role="button" tabindex="0" data-role-id="${role.id}" aria-label="${title} 카드 상세 보기">
+          <img src="${role.characterImage}" alt="${title}" class="gallery-card-thumb" draggable="false" />
+          <span class="gallery-card-label">${title}</span>
+        </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.gallery-card.unlocked').forEach((card) => {
+      const handler = () => {
+        const roleId = card.getAttribute('data-role-id');
+        openCardDetailModal(roleId);
+      };
+      card.addEventListener('click', handler);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handler();
+        }
+      });
+    });
+  }
+
+  function openCardDetailModal(roleId) {
+    const role = ALL_GALLERY_ROLES.find((r) => r.id === roleId);
+    if (!role) return;
+
+    const imgEl = document.getElementById('card-detail-img');
+    const titleEl = document.getElementById('card-detail-title');
+    const commentEl = document.getElementById('card-detail-comment');
+
+    if (imgEl) {
+      imgEl.src = role.characterImage;
+      imgEl.alt = role.resultTitle || role.name;
+    }
+    if (titleEl) {
+      titleEl.textContent = role.resultTitle || role.name;
+    }
+    if (commentEl) {
+      commentEl.textContent = role.resultComment;
+    }
+
+    openModal(modalCardDetail);
   }
 
   // =========================================================================
@@ -1123,6 +1227,8 @@
       charImgEl.alt = winnerRole.name;
 
       document.getElementById('result-new-record').hidden = true;
+      const newUnlockEl = document.getElementById('result-new-unlock');
+      if (newUnlockEl) newUnlockEl.hidden = true;
       document.getElementById('result-title').textContent = winnerRole.resultTitle;
       document.getElementById('result-comment').textContent = winnerRole.resultComment;
       document.getElementById('result-score').textContent = finalScore.toLocaleString();
@@ -1697,6 +1803,13 @@
       openModal(modalGuide);
     });
 
+    const openGalleryModal = () => {
+      renderGalleryModal();
+      openModal(modalGallery);
+    };
+    if (btnOpenGallery) btnOpenGallery.addEventListener('click', openGalleryModal);
+    if (btnResultGallery) btnResultGallery.addEventListener('click', openGalleryModal);
+
     document.querySelectorAll('[data-close-modal]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const target = document.getElementById(btn.getAttribute('data-close-modal'));
@@ -1704,7 +1817,7 @@
       });
     });
 
-    [modalAuth, modalRanking, modalGuide, modalFreeze].forEach((m) => {
+    [modalAuth, modalRanking, modalGuide, modalFreeze, modalGallery, modalCardDetail].forEach((m) => {
       if (!m) return;
       m.addEventListener('click', (e) => {
         if (e.target === m) closeModal(m);
@@ -1748,6 +1861,8 @@
       localStorage.removeItem('pkh_auth_token');
       localStorage.removeItem('pkh_local_nick');
       updateAccountUI();
+      closeModal(modalGallery);
+      closeModal(modalCardDetail);
       document.getElementById('input-nickname').value = '';
       document.getElementById('input-pin').value = '';
     });

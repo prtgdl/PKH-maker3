@@ -89,6 +89,7 @@
           </button>
           <div class="btn-pair">
             <button type="button" id="btn-open-ranking" class="btn-line">랭킹</button>
+            <button type="button" id="btn-open-gallery" class="btn-line" hidden>엔딩 도감</button>
             <button type="button" id="btn-open-guide" class="btn-line">게임 방법</button>
           </div>
         </div>
@@ -110,8 +111,9 @@
       <!-- 3. 결과 화면 -->
       <div id="screen-result" class="overlay-layer" hidden>
         <div class="panel-card result-card" id="result-card-box">
-          <div class="result-top-tags" id="result-new-record" hidden>
-            <span class="record-label">최고 기록 경신</span>
+          <div class="result-top-tags">
+            <span class="record-label" id="result-new-record" hidden>최고 기록 경신</span>
+            <span class="unlock-label" id="result-new-unlock" hidden>NEW! 도감 등록</span>
           </div>
 
           <div class="result-char-frame" id="result-portrait-bg">
@@ -145,6 +147,7 @@
           <button type="button" id="btn-retry" class="btn-solid">다시 하기</button>
           <div class="btn-pair">
             <button type="button" id="btn-result-ranking" class="btn-line">랭킹 보기</button>
+            <button type="button" id="btn-result-gallery" class="btn-line" hidden>엔딩 도감</button>
             <button type="button" id="btn-result-home" class="btn-line">처음으로</button>
           </div>
         </div>
@@ -232,6 +235,33 @@
           <h3 id="freeze-modal-title" class="modal-heading">안내</h3>
           <p class="modal-subcopy" id="freeze-modal-text" style="margin-bottom:3.8cqw;color:var(--ink);font-size:3.25cqw;line-height:1.55;word-break:keep-all;"></p>
           <button type="button" class="btn-solid" data-close-modal="modal-freeze">확인</button>
+        </div>
+      </div>
+
+      <!-- 8. 엔딩 도감 모달 -->
+      <div id="modal-gallery" class="modal-dim" hidden role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title">
+        <div class="modal-box gallery-modal-box">
+          <button type="button" class="close-x" data-close-modal="modal-gallery" aria-label="닫기">&times;</button>
+          <div class="gallery-header-row">
+            <h3 id="gallery-modal-title" class="modal-heading">엔딩 도감</h3>
+            <span id="gallery-count-badge" class="gallery-count-badge">0 / 6</span>
+          </div>
+          <div id="gallery-complete-banner" class="gallery-complete-banner" hidden>
+            COMPLETE!
+          </div>
+          <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+      </div>
+
+      <!-- 9. 엔딩 카드 상세 뷰어 모달 -->
+      <div id="modal-card-detail" class="modal-dim" hidden role="dialog" aria-modal="true" aria-labelledby="card-detail-title">
+        <div class="modal-box card-detail-box">
+          <button type="button" class="close-x" data-close-modal="modal-card-detail" aria-label="닫기">&times;</button>
+          <div class="card-detail-frame" id="card-detail-frame">
+            <img id="card-detail-img" src="" alt="" class="card-detail-img" draggable="false" />
+          </div>
+          <h4 id="card-detail-title" class="card-detail-title"></h4>
+          <p id="card-detail-comment" class="card-detail-comment"></p>
         </div>
       </div>
     </section>

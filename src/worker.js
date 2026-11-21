@@ -37,6 +37,7 @@ async function ensureSchema(db) {
         best_character TEXT NOT NULL DEFAULT 'guinea',
         best_survival_sec INTEGER NOT NULL DEFAULT 0,
         best_role_counts TEXT NOT NULL DEFAULT '{}',
+        unlocked_endings TEXT NOT NULL DEFAULT '[]',
         play_count INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -82,6 +83,11 @@ async function ensureSchema(db) {
   try {
     await db
       .prepare(`ALTER TABLE users ADD COLUMN best_role_counts TEXT NOT NULL DEFAULT '{}'`)
+      .run();
+  } catch {}
+  try {
+    await db
+      .prepare(`ALTER TABLE users ADD COLUMN unlocked_endings TEXT NOT NULL DEFAULT '[]'`)
       .run();
   } catch {}
   try {
@@ -186,7 +192,7 @@ async function verifySessionToken(authHeader, db, secretSeed) {
 
   const user = await db
     .prepare(
-      `SELECT id, nickname, pin_hash, best_score, best_character, best_survival_sec, play_count, updated_at
+      `SELECT id, nickname, pin_hash, best_score, best_character, best_survival_sec, unlocked_endings, play_count, updated_at
        FROM users WHERE id = ?`
     )
     .bind(payload.uid)
@@ -393,12 +399,19 @@ async function getRankingsPayload(db, currentUser = null) {
 }
 
 function formatUserProfile(user, myRank = null) {
+  let unlocked = [];
+  try {
+    unlocked = JSON.parse(user.unlocked_endings || '[]');
+  } catch {
+    unlocked = [];
+  }
   return {
     nickname: user.nickname,
     bestScore: Number(user.best_score || 0),
     bestCharacter: user.best_character || 'guinea',
     bestSurvivalSec: Number(user.best_survival_sec || 0),
     playCount: Number(user.play_count || 0),
+    unlockedEndings: Array.isArray(unlocked) ? unlocked : [],
     myRank,
   };
 }
@@ -529,7 +542,7 @@ export default {
         if (url.pathname === '/api/admin/overview' && request.method === 'GET') {
           const { results: userRows } = await env.DB.prepare(
             `SELECT id, nickname, best_score, best_character, best_survival_sec, best_role_counts,
-                    play_count, created_at, updated_at
+                    unlocked_endings, play_count, created_at, updated_at
              FROM users
              ORDER BY best_score DESC, updated_at ASC, id ASC`
           ).all();
@@ -577,6 +590,12 @@ export default {
               const cid = VALID_CHARACTERS.has(u.best_character) ? u.best_character : 'basic';
               bestEndingCounts[cid] = (bestEndingCounts[cid] || 0) + 1;
             }
+            let unlocked = [];
+            try {
+              unlocked = JSON.parse(u.unlocked_endings || '[]');
+            } catch {
+              unlocked = [];
+            }
             return {
               id: Number(u.id),
               rank: hasScore ? currentRank : null,
@@ -585,6 +604,7 @@ export default {
               bestCharacter: u.best_character || 'guinea',
               bestSurvivalSec: Number(u.best_survival_sec || 0),
               bestRoleCounts: parseRoleCounts(u.best_role_counts),
+              unlockedEndings: Array.isArray(unlocked) ? unlocked : [],
               playCount: Number(u.play_count || 0),
               createdAt: u.created_at,
               updatedAt: u.updated_at,
@@ -700,6 +720,7 @@ export default {
                    best_character = 'guinea',
                    best_survival_sec = 0,
                    best_role_counts = '{}',
+                   unlocked_endings = '[]',
                    play_count = 0,
                    updated_at = datetime('now')`
             ),
@@ -764,7 +785,7 @@ export default {
         const pin = pinCheck.value;
 
         const existing = await env.DB.prepare(
-          `SELECT id, nickname, pin_salt, pin_hash, best_score, best_character, best_survival_sec, play_count, updated_at
+          `SELECT id, nickname, pin_salt, pin_hash, best_score, best_character, best_survival_sec, unlocked_endings, play_count, updated_at
            FROM users WHERE nickname = ? COLLATE NOCASE`
         )
           .bind(nickname)
@@ -779,7 +800,7 @@ export default {
           const inserted = await env.DB.prepare(
             `INSERT INTO users (nickname, pin_salt, pin_hash)
              VALUES (?, ?, ?)
-             RETURNING id, nickname, pin_hash, best_score, best_character, best_survival_sec, play_count, updated_at`
+             RETURNING id, nickname, pin_hash, best_score, best_character, best_survival_sec, unlocked_endings, play_count, updated_at`
           )
             .bind(nickname, salt, pinHash)
             .first();
@@ -927,6 +948,19 @@ export default {
 
         const isNewRecord = rawScore > Number(user.best_score || 0);
 
+        let curUnlocked = [];
+        try {
+          curUnlocked = JSON.parse(user.unlocked_endings || '[]');
+          if (!Array.isArray(curUnlocked)) curUnlocked = [];
+        } catch {
+          curUnlocked = [];
+        }
+        const isNewUnlock = !curUnlocked.includes(characterId);
+        if (isNewUnlock) {
+          curUnlocked.push(characterId);
+        }
+        const unlockedJson = JSON.stringify(curUnlocked);
+
         await env.DB.prepare(
           `INSERT INTO score_logs (user_id, score, character_id, survival_sec, role_counts)
            VALUES (?, ?, ?, ?, ?)`
@@ -942,21 +976,24 @@ export default {
                  best_character = ?,
                  best_survival_sec = ?,
                  best_role_counts = ?,
+                 unlocked_endings = ?,
                  play_count = play_count + 1,
                  updated_at = datetime('now')
              WHERE id = ?
-             RETURNING id, nickname, pin_hash, best_score, best_character, best_survival_sec, play_count, updated_at`
+             RETURNING id, nickname, pin_hash, best_score, best_character, best_survival_sec, unlocked_endings, play_count, updated_at`
           )
-            .bind(rawScore, characterId, survivalSec, roleCountsJson, user.id)
+            .bind(rawScore, characterId, survivalSec, roleCountsJson, unlockedJson, user.id)
             .first();
         } else {
           updatedUser = await env.DB.prepare(
             `UPDATE users
-             SET play_count = play_count + 1
+             SET unlocked_endings = ?,
+                 play_count = play_count + 1,
+                 updated_at = datetime('now')
              WHERE id = ?
-             RETURNING id, nickname, pin_hash, best_score, best_character, best_survival_sec, play_count, updated_at`
+             RETURNING id, nickname, pin_hash, best_score, best_character, best_survival_sec, unlocked_endings, play_count, updated_at`
           )
-            .bind(user.id)
+            .bind(unlockedJson, user.id)
             .first();
         }
 
@@ -965,6 +1002,8 @@ export default {
         return jsonResponse({
           ok: true,
           isNewRecord,
+          isNewUnlock,
+          unlockedEndings: curUnlocked,
           submittedScore: rawScore,
           user: formatUserProfile(updatedUser, board.myRank),
           ...board,

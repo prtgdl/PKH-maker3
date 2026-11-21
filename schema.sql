@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   best_character TEXT NOT NULL DEFAULT 'guinea',
   best_survival_sec INTEGER NOT NULL DEFAULT 0,
   best_role_counts TEXT NOT NULL DEFAULT '{}',
+  unlocked_endings TEXT NOT NULL DEFAULT '[]',
   play_count INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))

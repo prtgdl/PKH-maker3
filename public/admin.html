@@ -693,6 +693,7 @@
           <option value="remy">엔딩: 레미</option>
           <option value="basic">엔딩: P.K.H☆ (동점 히든)</option>
           <option value="guinea">엔딩: 기니피그 (0점)</option>
+          <option value="complete">도감 6종 COMPLETE 달성자만</option>
         </select>
         <select id="select-user-sort" class="select-box">
           <option value="rank">정렬: 랭킹(최고 점수)순</option>
@@ -712,6 +713,7 @@
               <th>닉네임</th>
               <th>엔딩 배역</th>
               <th>최고 점수</th>
+              <th>도감 수집</th>
               <th>배역별 수집 개수 (최고기록 판)</th>
               <th>버틴 시간</th>
               <th>플레이 횟수</th>
@@ -866,6 +868,24 @@
           </span>`;
       }
 
+      function renderUnlockedEndings(unlocked) {
+        const list = Array.isArray(unlocked) ? unlocked : [];
+        if (!list.length) {
+          return '<span style="color:var(--ink-soft);font-size:11.5px;">미수집 (0/6)</span>';
+        }
+        const isComplete = list.length >= 6;
+        const badges = list
+          .map((cid) => {
+            const meta = CHAR_META[cid] || { name: cid, tint: '#ebe2d5' };
+            return `<span class="char-badge" style="background:${meta.tint};border-color:var(--ink);font-size:10px;padding:1px 5px;" title="${escapeHtml(meta.name)}">${escapeHtml(meta.name)}</span>`;
+          })
+          .join('');
+        const completeTag = isComplete
+          ? ' <span style="background:var(--gold);color:var(--ink);font-weight:700;font-size:10px;padding:2px 5px;border:1px solid var(--ink);border-radius:0;">COMPLETE!</span>'
+          : '';
+        return `<div style="display:flex;flex-direction:column;gap:3px;"><div style="display:flex;align-items:center;gap:4px;"><strong>${list.length}/6</strong>${completeTag}</div><div style="display:flex;flex-wrap:wrap;gap:2px;">${badges}</div></div>`;
+      }
+
       async function adminFetch(path, options = {}) {
         const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
         if (state.token) {
@@ -891,9 +911,83 @@
         }
       }
 
+      function loadLocalOverview() {
+        const LOCAL_RANK_KEY = 'pkh_local_rank_v1';
+        let localUsers = [];
+        try {
+          localUsers = JSON.parse(localStorage.getItem(LOCAL_RANK_KEY) || '[]');
+        } catch {
+          localUsers = [];
+        }
+
+        localUsers.sort((a, b) => (b.bestScore || 0) - (a.bestScore || 0));
+
+        let currentRank = 0;
+        let lastScore = null;
+        const bestEndingCounts = {};
+
+        const users = localUsers.map((u, i) => {
+          const score = Number(u.bestScore || 0);
+          if (score > 0) {
+            if (lastScore === null || score < lastScore) {
+              currentRank = i + 1;
+              lastScore = score;
+            }
+          }
+          const cid = u.bestCharacter || 'guinea';
+          if (score > 0) {
+            bestEndingCounts[cid] = (bestEndingCounts[cid] || 0) + 1;
+          }
+          return {
+            id: i + 1,
+            rank: score > 0 ? currentRank : null,
+            nickname: u.nickname,
+            bestScore: score,
+            bestCharacter: cid,
+            bestSurvivalSec: Number(u.bestSurvivalSec || 0),
+            bestRoleCounts: u.bestRoleCounts || {},
+            unlockedEndings: Array.isArray(u.unlockedEndings) ? u.unlockedEndings : [],
+            playCount: Number(u.playCount || 0),
+            createdAt: u.createdAt || (typeof u.updatedAt === 'string' ? u.updatedAt : new Date().toISOString()),
+            updatedAt: typeof u.updatedAt === 'string' ? u.updatedAt : new Date().toISOString(),
+          };
+        });
+
+        const totalUsers = users.length;
+        const scoredUsers = users.filter((u) => u.bestScore > 0).length;
+        const totalPlays = users.reduce((sum, u) => sum + (u.playCount || 0), 0);
+
+        state.summary = {
+          totalUsers,
+          scoredUsers,
+          totalPlays,
+          totalScoreLogs: totalPlays,
+          endingCounts: bestEndingCounts,
+          bestEndingCounts,
+        };
+        state.freeze = { hasSchedule: false, status: 'none' };
+        state.users = users;
+        state.logs = [];
+
+        const nowStr = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+        document.getElementById('last-updated-text').textContent = `조회 완료: ${nowStr} (로컬 오프라인 데이터 모드)`;
+
+        renderFreezeStatus();
+        renderSummary();
+        renderTables();
+      }
+
       async function loadOverview() {
         document.getElementById('last-updated-text').textContent = '불러오는 중...';
+        if (state.token === 'local-admin-dev-token') {
+          loadLocalOverview();
+          return;
+        }
         const { status, data } = await adminFetch('/api/admin/overview');
+        if (status === 404) {
+          loadLocalOverview();
+          return;
+        }
         if (status !== 200 || !data.ok) return;
 
         state.summary = data.summary;
@@ -981,6 +1075,7 @@
         let arr = state.users.filter((u) => {
           if (q && !u.nickname.toLowerCase().includes(q)) return false;
           if (filterVal === 'ranked') return u.bestScore > 0;
+          if (filterVal === 'complete') return u.unlockedEndings && u.unlockedEndings.length >= 6;
           if (filterVal !== 'all') return u.bestCharacter === filterVal;
           return true;
         });
@@ -1004,6 +1099,7 @@
         return state.logs.filter((l) => {
           if (q && !String(l.nickname).toLowerCase().includes(q)) return false;
           if (filterVal === 'ranked') return l.score > 0;
+          if (filterVal === 'complete') return true;
           if (filterVal !== 'all') return l.characterId === filterVal;
           return true;
         });
@@ -1018,7 +1114,7 @@
 
         const tbodyUsers = document.getElementById('tbody-users');
         if (filteredUsers.length === 0) {
-          tbodyUsers.innerHTML = '<tr><td colspan="10" class="empty-row">조회된 유저가 없습니다.</td></tr>';
+          tbodyUsers.innerHTML = '<tr><td colspan="11" class="empty-row">조회된 유저가 없습니다.</td></tr>';
         } else {
           tbodyUsers.innerHTML = filteredUsers
             .map(
@@ -1028,6 +1124,7 @@
                 <td><strong>${escapeHtml(u.nickname)}</strong></td>
                 <td>${renderCharBadge(u.bestCharacter)}</td>
                 <td class="num-col"><strong>${u.bestScore.toLocaleString()}점</strong></td>
+                <td>${renderUnlockedEndings(u.unlockedEndings)}</td>
                 <td>${renderRolePills(u.bestRoleCounts)}</td>
                 <td class="num-col">${formatDuration(u.bestSurvivalSec)}</td>
                 <td class="num-col">${u.playCount.toLocaleString()}회</td>
@@ -1076,6 +1173,20 @@
           body: JSON.stringify({ password: pw }),
         });
         btn.disabled = false;
+        if (status === 404) {
+          if (pw === '0731') {
+            state.token = 'local-admin-dev-token';
+            sessionStorage.setItem(TOKEN_KEY, state.token);
+            document.getElementById('admin-pw-input').value = '';
+            showView('dashboard');
+            loadOverview();
+            return;
+          } else {
+            loginErr.textContent = '관리자 비밀번호가 일치하지 않습니다.';
+            loginErr.hidden = false;
+            return;
+          }
+        }
         if (status !== 200 || !data.ok) {
           loginErr.textContent = data.error || '비밀번호를 확인해 주세요.';
           loginErr.hidden = false;
@@ -1162,6 +1273,16 @@
           return;
         }
         btn.disabled = true;
+        if (state.token === 'local-admin-dev-token') {
+          const LOCAL_RANK_KEY = 'pkh_local_rank_v1';
+          try {
+            const list = JSON.parse(localStorage.getItem(LOCAL_RANK_KEY) || '[]');
+            const filtered = list.filter((u) => u.nickname.toLowerCase() !== nick.toLowerCase());
+            localStorage.setItem(LOCAL_RANK_KEY, JSON.stringify(filtered));
+          } catch {}
+          loadLocalOverview();
+          return;
+        }
         const { status, data } = await adminFetch(`/api/admin/users/${uid}`, { method: 'DELETE' });
         if (status === 200 && data.ok) {
           await loadOverview();
@@ -1206,6 +1327,31 @@
         if (text !== '초기화') {
           confirmErr.textContent = '정확히 "초기화" 세 글자를 입력해 주세요.';
           confirmErr.hidden = false;
+          return;
+        }
+        if (state.token === 'local-admin-dev-token') {
+          const LOCAL_RANK_KEY = 'pkh_local_rank_v1';
+          if (state.pendingResetMode === 'scores') {
+            try {
+              const list = JSON.parse(localStorage.getItem(LOCAL_RANK_KEY) || '[]');
+              list.forEach((u) => {
+                u.bestScore = 0;
+                u.bestCharacter = 'guinea';
+                u.bestSurvivalSec = 0;
+                u.bestRoleCounts = {};
+                u.unlockedEndings = [];
+                u.playCount = 0;
+              });
+              localStorage.setItem(LOCAL_RANK_KEY, JSON.stringify(list));
+            } catch {}
+          } else {
+            localStorage.removeItem(LOCAL_RANK_KEY);
+            localStorage.removeItem('pkh_auth_token');
+            localStorage.removeItem('pkh_local_nick');
+          }
+          modalConfirm.hidden = true;
+          loadLocalOverview();
+          alert('로컬 테스트 데이터가 초기화되었습니다.');
           return;
         }
         const endpoint =
