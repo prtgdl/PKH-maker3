@@ -1694,6 +1694,7 @@
   let pointerDown = false;
   canvas.addEventListener('pointerdown', (e) => {
     if (gameState.phase !== 'playing') return;
+    if (e.pointerType === 'mouse') return;
     pointerDown = true;
     gameState.player.targetX = pointerToStageX(e.clientX);
     canvas.setPointerCapture?.(e.pointerId);
@@ -1701,12 +1702,19 @@
 
   canvas.addEventListener('pointermove', (e) => {
     if (gameState.phase !== 'playing') return;
-    if (e.pointerType === 'mouse' || pointerDown) {
+    if (e.pointerType === 'mouse') return;
+    if (pointerDown) {
       gameState.player.targetX = pointerToStageX(e.clientX);
     }
   });
 
-  window.addEventListener('pointerup', () => {
+  window.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'mouse') return;
+    pointerDown = false;
+  });
+
+  window.addEventListener('pointercancel', (e) => {
+    if (e.pointerType === 'mouse') return;
     pointerDown = false;
   });
 
