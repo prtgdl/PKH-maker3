@@ -596,16 +596,17 @@ export default {
             } catch {
               unlocked = [];
             }
+            const playCount = Number(u.play_count || 0);
             return {
               id: Number(u.id),
               rank: hasScore ? currentRank : null,
               nickname: u.nickname,
               bestScore,
-              bestCharacter: u.best_character || 'guinea',
+              bestCharacter: playCount > 0 ? (u.best_character || 'guinea') : null,
               bestSurvivalSec: Number(u.best_survival_sec || 0),
               bestRoleCounts: parseRoleCounts(u.best_role_counts),
               unlockedEndings: Array.isArray(unlocked) ? unlocked : [],
-              playCount: Number(u.play_count || 0),
+              playCount,
               createdAt: u.created_at,
               updatedAt: u.updated_at,
             };
@@ -798,8 +799,8 @@ export default {
           const salt = randomHex(16);
           const pinHash = await hashPin(pin, salt);
           const inserted = await env.DB.prepare(
-            `INSERT INTO users (nickname, pin_salt, pin_hash)
-             VALUES (?, ?, ?)
+            `INSERT INTO users (nickname, pin_salt, pin_hash, best_character)
+             VALUES (?, ?, ?, 'guinea')
              RETURNING id, nickname, pin_hash, best_score, best_character, best_survival_sec, unlocked_endings, play_count, updated_at`
           )
             .bind(nickname, salt, pinHash)
@@ -946,7 +947,9 @@ export default {
           characterId = tiedRoles.length === 1 ? tiedRoles[0] : 'basic';
         }
 
+        const isFirstPlay = Number(user.play_count || 0) === 0;
         const isNewRecord = rawScore > Number(user.best_score || 0);
+        const shouldUpdateBest = isNewRecord || isFirstPlay;
 
         let curUnlocked = [];
         try {
@@ -969,7 +972,7 @@ export default {
           .run();
 
         let updatedUser;
-        if (isNewRecord) {
+        if (shouldUpdateBest) {
           updatedUser = await env.DB.prepare(
             `UPDATE users
              SET best_score = ?,

@@ -937,16 +937,17 @@
           if (score > 0) {
             bestEndingCounts[cid] = (bestEndingCounts[cid] || 0) + 1;
           }
+          const playCount = Number(u.playCount || 0);
           return {
             id: i + 1,
             rank: score > 0 ? currentRank : null,
             nickname: u.nickname,
             bestScore: score,
-            bestCharacter: cid,
+            bestCharacter: playCount > 0 ? cid : null,
             bestSurvivalSec: Number(u.bestSurvivalSec || 0),
             bestRoleCounts: u.bestRoleCounts || {},
             unlockedEndings: Array.isArray(u.unlockedEndings) ? u.unlockedEndings : [],
-            playCount: Number(u.playCount || 0),
+            playCount,
             createdAt: u.createdAt || (typeof u.updatedAt === 'string' ? u.updatedAt : new Date().toISOString()),
             updatedAt: typeof u.updatedAt === 'string' ? u.updatedAt : new Date().toISOString(),
           };
@@ -1075,7 +1076,7 @@
           if (q && !u.nickname.toLowerCase().includes(q)) return false;
           if (filterVal === 'ranked') return u.bestScore > 0;
           if (filterVal === 'complete') return u.unlockedEndings && u.unlockedEndings.length >= 6;
-          if (filterVal !== 'all') return u.bestCharacter === filterVal;
+          if (filterVal !== 'all') return u.playCount > 0 && u.bestCharacter === filterVal;
           return true;
         });
 
@@ -1143,7 +1144,7 @@
               <tr>
                 <td class="num-col">${u.rank ? `${u.rank}위` : '-'}</td>
                 <td><strong>${escapeHtml(u.nickname)}</strong></td>
-                <td>${renderCharBadge(u.bestCharacter)}</td>
+                <td>${u.playCount > 0 && u.bestCharacter ? renderCharBadge(u.bestCharacter) : '<span style="color:#8b786d;font-size:12px;">미플레이 (-)</span>'}</td>
                 <td class="num-col"><strong>${u.bestScore.toLocaleString()}점</strong></td>
                 <td>${renderRolePills(u.bestRoleCounts)}</td>
                 <td class="num-col">${formatDuration(u.bestSurvivalSec)}</td>

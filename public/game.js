@@ -864,12 +864,17 @@
           const newUnlockEl = document.getElementById('result-new-unlock');
           if (newUnlockEl) newUnlockEl.hidden = false;
         }
-        if (payload.score > (list[idx].bestScore || 0)) {
+        const isFirstPlay = Number(list[idx].playCount || 0) === 0;
+        const isNewRecord = payload.score > (list[idx].bestScore || 0);
+        if (isNewRecord || isFirstPlay) {
           list[idx].bestScore = payload.score;
           list[idx].bestCharacter = payload.characterId;
           list[idx].bestSurvivalSec = payload.survivalSec;
+          list[idx].bestRoleCounts = payload.roleCounts;
           list[idx].updatedAt = Date.now();
-          newRecEl.hidden = false;
+          if (isNewRecord && payload.score > 0) {
+            newRecEl.hidden = false;
+          }
         }
         list[idx].playCount = (list[idx].playCount || 0) + 1;
         saveLocalStore(list);
