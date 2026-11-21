@@ -621,9 +621,9 @@
         <div class="stat-sub">닉네임 등록 기준 전체 인원</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">점수 등록 참여자 수</div>
+        <div class="stat-label">게임 플레이 랭커 수</div>
         <div class="stat-value" id="stat-scored-users">0</div>
-        <div class="stat-sub">1점 이상 기록 보유 랭커</div>
+        <div class="stat-sub">1회 이상 플레이 기록 보유 랭커</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">누적 총 플레이 판수</div>
@@ -685,8 +685,8 @@
           placeholder="닉네임 검색..."
         />
         <select id="select-user-filter" class="select-box">
-          <option value="all">전체 등록 유저 (0점 포함)</option>
-          <option value="ranked">점수 보유 랭커만</option>
+          <option value="all">전체 등록 유저 (미플레이 포함)</option>
+          <option value="ranked">1회 이상 플레이 랭커만</option>
           <option value="simon">엔딩: 사이먼</option>
           <option value="goldmund">엔딩: 골드문트</option>
           <option value="philos">엔딩: 필로스</option>
@@ -859,7 +859,10 @@
       }
 
       function renderCharBadge(cid) {
-        const meta = CHAR_META[cid] || CHAR_META.guinea;
+        if (!cid || !CHAR_META[cid]) {
+          return '<span style="color:#8b786d;font-size:12px;">미플레이 (-)</span>';
+        }
+        const meta = CHAR_META[cid];
         return `
           <span class="char-cell">
             <img src="${meta.img}" alt="${escapeHtml(meta.name)}" loading="lazy" />

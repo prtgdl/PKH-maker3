@@ -483,10 +483,17 @@ export default {
     // 정적 파일 및 /admin 경로 처리
     if (!url.pathname.startsWith('/api/')) {
       if (env.ASSETS) {
-        if (url.pathname === '/admin' || url.pathname === '/admin/') {
+        if (url.pathname === '/admin' || url.pathname === '/admin/' || url.pathname === '/admin.html') {
           const adminUrl = new URL(request.url);
           adminUrl.pathname = '/admin.html';
-          return env.ASSETS.fetch(new Request(adminUrl.toString(), request));
+          const resp = await env.ASSETS.fetch(new Request(adminUrl.toString(), request));
+          const newHeaders = new Headers(resp.headers);
+          newHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+          return new Response(resp.body, {
+            status: resp.status,
+            statusText: resp.statusText,
+            headers: newHeaders,
+          });
         }
         return env.ASSETS.fetch(request);
       }
