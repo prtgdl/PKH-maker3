@@ -713,7 +713,6 @@
               <th>닉네임</th>
               <th>엔딩 배역</th>
               <th>최고 점수</th>
-              <th>도감 수집</th>
               <th>배역별 수집 개수 (최고기록 판)</th>
               <th>버틴 시간</th>
               <th>플레이 횟수</th>
@@ -1096,10 +1095,32 @@
       function getFilteredLogs() {
         const q = document.getElementById('input-search').value.trim().toLowerCase();
         const filterVal = document.getElementById('select-user-filter').value;
+        const completeUserIds =
+          filterVal === 'complete'
+            ? new Set(
+                state.users
+                  .filter((u) => u.unlockedEndings && u.unlockedEndings.length >= 6)
+                  .map((u) => u.id)
+              )
+            : null;
+        const completeNicknames =
+          filterVal === 'complete'
+            ? new Set(
+                state.users
+                  .filter((u) => u.unlockedEndings && u.unlockedEndings.length >= 6)
+                  .map((u) => String(u.nickname || '').toLowerCase())
+              )
+            : null;
+
         return state.logs.filter((l) => {
           if (q && !String(l.nickname).toLowerCase().includes(q)) return false;
           if (filterVal === 'ranked') return l.score > 0;
-          if (filterVal === 'complete') return true;
+          if (filterVal === 'complete') {
+            return (
+              (l.userId && completeUserIds.has(l.userId)) ||
+              completeNicknames.has(String(l.nickname || '').toLowerCase())
+            );
+          }
           if (filterVal !== 'all') return l.characterId === filterVal;
           return true;
         });
@@ -1114,7 +1135,7 @@
 
         const tbodyUsers = document.getElementById('tbody-users');
         if (filteredUsers.length === 0) {
-          tbodyUsers.innerHTML = '<tr><td colspan="11" class="empty-row">조회된 유저가 없습니다.</td></tr>';
+          tbodyUsers.innerHTML = '<tr><td colspan="10" class="empty-row">조회된 유저가 없습니다.</td></tr>';
         } else {
           tbodyUsers.innerHTML = filteredUsers
             .map(
@@ -1124,7 +1145,6 @@
                 <td><strong>${escapeHtml(u.nickname)}</strong></td>
                 <td>${renderCharBadge(u.bestCharacter)}</td>
                 <td class="num-col"><strong>${u.bestScore.toLocaleString()}점</strong></td>
-                <td>${renderUnlockedEndings(u.unlockedEndings)}</td>
                 <td>${renderRolePills(u.bestRoleCounts)}</td>
                 <td class="num-col">${formatDuration(u.bestSurvivalSec)}</td>
                 <td class="num-col">${u.playCount.toLocaleString()}회</td>
